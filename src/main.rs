@@ -17,15 +17,22 @@ const ICON_BYTES: &[u8] = include_bytes!(r"C:\Users\suailali\Desktop\المست�
 #[derive(Debug, Clone)]
 struct ZephyrState {
     current_temp: f64,
+    current_rain: bool,
     max_temp: f64,
     min_temp: f64,
+    today_rain_prob: u64,
     tomorrow_max: f64,
     tomorrow_min: f64,
+    tomorrow_rain_prob: u64,
+}
+
+fn is_rainy_code(code: u64) -> bool {
+    matches!(code, 51..=67 | 80..=82 | 95..=99)
 }
 
 async fn fetch_weather() -> Result<ZephyrState, Box<dyn std::error::Error>> {
     let params = format!(
-        "latitude={}&longitude={}&current_weather=true&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=auto",
+        "latitude={}&longitude={}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=auto",
         LATITUDE, LONGITUDE
     );
 
@@ -34,19 +41,35 @@ async fn fetch_weather() -> Result<ZephyrState, Box<dyn std::error::Error>> {
     let response = client.get(&url).send().await?;
     let json_body: serde_json::Value = response.json().await?;
 
+    let weather_code = json_body["current_weather"]["weathercode"].as_u64().unwrap_or(0);
+
     Ok(ZephyrState {
         current_temp: json_body["current_weather"]["temperature"].as_f64().unwrap_or(0.0),
+        current_rain: is_rainy_code(weather_code),
         max_temp: json_body["daily"]["temperature_2m_max"][0].as_f64().unwrap_or(0.0),
         min_temp: json_body["daily"]["temperature_2m_min"][0].as_f64().unwrap_or(0.0),
+        today_rain_prob: json_body["daily"]["precipitation_probability_max"][0].as_u64().unwrap_or(0),
         tomorrow_max: json_body["daily"]["temperature_2m_max"][1].as_f64().unwrap_or(0.0),
         tomorrow_min: json_body["daily"]["temperature_2m_min"][1].as_f64().unwrap_or(0.0),
+        tomorrow_rain_prob: json_body["daily"]["precipitation_probability_max"][1].as_u64().unwrap_or(0),
     })
 }
 
 fn format_tooltip(state: &ZephyrState) -> String {
+    let now_rain = if state.current_rain { " (Rain)" } else { "" };
+    let today_umbrella = if state.today_rain_prob >= 30 { format!(" ☂{}%", state.today_rain_prob) } else { "".to_string() };
+    let tomorrow_umbrella = if state.tomorrow_rain_prob >= 30 { format!(" ☂{}%", state.tomorrow_rain_prob) } else { "".to_string() };
+
     format!(
-        "Zephyr (Sanger, CA)\nNow: {:.1}°F\nToday: {:.0}° / {:.0}°F\nTomorrow: {:.0}° / {:.0}°F",
-        state.current_temp, state.max_temp, state.min_temp, state.tomorrow_max, state.tomorrow_min
+        "Zephyr (Sanger)\nNow: {:.1}°F{}\nToday: {:.0}°/{:.0}°F{}\nTomorrow: {:.0}°/{:.0}°F{}",
+        state.current_temp,
+        now_rain,
+        state.max_temp,
+        state.min_temp,
+        today_umbrella,
+        state.tomorrow_max,
+        state.tomorrow_min,
+        tomorrow_umbrella
     )
 }
 
@@ -66,10 +89,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let initial_state = rt.block_on(async {
         fetch_weather().await.unwrap_or(ZephyrState {
             current_temp: 0.0,
+            current_rain: false,
             max_temp: 0.0,
             min_temp: 0.0,
+            today_rain_prob: 0,
             tomorrow_max: 0.0,
             tomorrow_min: 0.0,
+            tomorrow_rain_prob: 0,
         })
     });
 
