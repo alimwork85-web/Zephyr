@@ -137,21 +137,30 @@ pub async fn search_cities(client: &reqwest::Client, query: &str) -> Result<Vec<
         .collect())
 }
 
-/// Windows limits tray tooltips to 127 characters, so keep this compact.
-pub fn format_tooltip(city: &City, celsius: bool, w: &Weather, updated: &str) -> String {
+/// Windows cuts tray tooltips at 63 UTF-16 units, so the text is built compactly
+/// and whole lines are dropped from the bottom before anything is cut mid-line.
+pub const TOOLTIP_MAX: usize = 63;
+
+pub fn format_tooltip(city: &City, celsius: bool, w: &Weather, footer: &str) -> String {
     let u = if celsius { "C" } else { "F" };
     let umbrella = |p: u32| if p >= 30 { format!(" \u{2602}{p}%") } else { String::new() };
-    let name: String = city.name.chars().take(24).collect();
-    let rain = if w.current_rain { " (Rain)" } else { "" };
-    let text = format!(
-        "Zephyr ({})\nNow: {:.1}\u{b0}{}{}\nToday: {:.0}\u{b0}/{:.0}\u{b0}{}{}\nTomorrow: {:.0}\u{b0}/{:.0}\u{b0}{}{}\nUpdated {}",
-        name,
-        w.current_temp, u, rain,
-        w.today_max, w.today_min, u, umbrella(w.today_rain_prob),
-        w.tomorrow_max, w.tomorrow_min, u, umbrella(w.tomorrow_rain_prob),
-        updated
-    );
-    text.chars().take(127).collect()
+    let name: String = city.name.chars().take(12).collect();
+    let rain = if w.current_rain { " Rain" } else { "" };
+    let mut lines = vec![
+        format!("{} {:.1}\u{b0}{}{}", name, w.current_temp, u, rain),
+        format!("Today {:.0}\u{b0}/{:.0}\u{b0}{}{}", w.today_max, w.today_min, u, umbrella(w.today_rain_prob)),
+        format!("Tmrw {:.0}\u{b0}/{:.0}\u{b0}{}{}", w.tomorrow_max, w.tomorrow_min, u, umbrella(w.tomorrow_rain_prob)),
+        footer.to_string(),
+    ];
+    let units = |s: &str| s.encode_utf16().count();
+    while lines.len() > 1 && units(&lines.join("\n")) > TOOLTIP_MAX {
+        lines.pop();
+    }
+    let mut text = lines.join("\n");
+    while units(&text) > TOOLTIP_MAX {
+        text.pop();
+    }
+    text
 }
 
 #[cfg(test)]
@@ -192,11 +201,31 @@ mod tests {
     }
 
     #[test]
-    fn tooltip_is_short_and_shows_umbrella() {
+    fn tooltip_typical_case_keeps_every_line() {
         let w = parse_forecast(SAMPLE).unwrap();
-        let t = format_tooltip(&City::default(), false, &w, "14:05");
-        assert!(t.contains("Zephyr (Sanger)"));
+        let t = format_tooltip(&City::default(), false, &w, "Upd 14:05");
+        assert!(t.starts_with("Sanger 71.6\u{b0}F Rain"));
         assert!(t.contains("\u{2602}45%"));
-        assert!(t.chars().count() <= 127);
+        assert!(t.ends_with("Upd 14:05"));
+        assert!(t.encode_utf16().count() <= TOOLTIP_MAX);
+    }
+
+    #[test]
+    fn tooltip_never_exceeds_limit() {
+        let w = Weather {
+            current_temp: -123.4,
+            current_rain: true,
+            today_max: -100.0,
+            today_min: -120.0,
+            today_rain_prob: 100,
+            tomorrow_max: 120.0,
+            tomorrow_min: -110.0,
+            tomorrow_rain_prob: 100,
+        };
+        let mut city = City::default();
+        city.name = "Llanfairpwllgwyngyll".into();
+        let t = format_tooltip(&city, true, &w, "Upd 14:05");
+        assert!(t.encode_utf16().count() <= TOOLTIP_MAX);
+        assert!(t.contains("Today"));
     }
 }

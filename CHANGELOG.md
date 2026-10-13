@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+### Fixed
+- The tooltip was cut off after about 63 characters by Windows, so the "Updated" line and the rain details were lost. It is now compact (city name first, then Today, Tmrw and the update time) and always fits.
+- While offline the tooltip shows "Offline" next to the last known weather.
+
 ## 0.2.0
 
 ### Added

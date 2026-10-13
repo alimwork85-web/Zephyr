@@ -34,15 +34,15 @@ fn lock<T>(m: &Mutex<T>) -> MutexGuard<'_, T> {
 
 /// Updates the tray tooltip and icon. `failed` only matters when there is no
 /// weather to show yet.
-fn show(tray: &TrayIcon, cfg: &Config, w: Option<&Weather>, updated: &str, failed: bool) {
+fn show(tray: &TrayIcon, cfg: &Config, w: Option<&Weather>, footer: &str, failed: bool) {
     let (tip, icon) = match w {
         Some(w) => (
-            weather::format_tooltip(&cfg.city, cfg.celsius, w, updated),
+            weather::format_tooltip(&cfg.city, cfg.celsius, w, footer),
             icon::temperature_icon(w.current_temp, cfg.celsius, w.today_rain_prob >= RAIN_ALERT_THRESHOLD),
         ),
         None => {
             let line = if failed { "Weather unavailable\nRetrying soon..." } else { "Loading weather..." };
-            (format!("Zephyr ({})\n{}", cfg.city.name.chars().take(24).collect::<String>(), line), None)
+            (format!("{}\n{}", cfg.city.name.chars().take(12).collect::<String>(), line), None)
         }
     };
     let _ = tray.set_tooltip(Some(tip));
@@ -94,7 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .ok_or("could not create the tray icon")?;
     let tray = TrayIconBuilder::new()
         .with_menu(Box::new(menu))
-        .with_tooltip(format!("Zephyr ({})\nLoading weather...", cfg.city.name))
+        .with_tooltip(format!("{}\nLoading weather...", cfg.city.name.chars().take(12).collect::<String>()))
         .with_icon(start_icon)
         .build()?;
 
@@ -142,7 +142,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match event {
             UserEvent::Weather(Ok(w)) => {
                 updated = Local::now().format("%H:%M").to_string();
-                show(&tray, &cfg, Some(&w), &updated, false);
+                show(&tray, &cfg, Some(&w), &format!("Upd {updated}"), false);
                 let today = Local::now().date_naive();
                 if cfg.rain_alerts && w.today_rain_prob >= RAIN_ALERT_THRESHOLD && alerted_on != Some(today) {
                     notify_rain(&cfg.city, w.today_rain_prob);
@@ -151,7 +151,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 latest = Some(w);
             }
             UserEvent::Weather(Err(_)) => match &latest {
-                Some(w) => show(&tray, &cfg, Some(w), &format!("{updated} (offline)"), true),
+                Some(w) => show(&tray, &cfg, Some(w), "Offline", true),
                 None => show(&tray, &cfg, None, "", true),
             },
             UserEvent::CityChosen(city) => {
