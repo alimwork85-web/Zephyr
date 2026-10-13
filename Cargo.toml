@@ -1,16 +1,23 @@
 [package]
 name = "zephyr"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
+description = "Lightweight Windows system tray weather app powered by Open-Meteo"
+license = "MIT"
+repository = "https://github.com/alimwork85-web/Zephyr"
 
 [dependencies]
-tokio = { version = "1", features = ["full"] }
-reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1", features = ["rt-multi-thread", "time", "sync", "macros"] }
+reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+toml = "0.8"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
 tray-icon = "0.14"
-image = "0.24"
 winit = "0.29"
+native-windows-gui = "1.0"
+winreg = "0.52"
+notify-rust = "4"
 
 [build-dependencies]
 winres = "0.1"
