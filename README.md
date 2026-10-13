@@ -18,12 +18,14 @@ Built in Rust. About 2 MB, around 20 MB of RAM, and free forever (MIT).
 ## Download
 
 1. Open the [latest release](https://github.com/alimwork85-web/Zephyr/releases/latest).
-2. Download `Zephyr-v0.2.1-windows-x64.exe` and run it. There is no installer.
+2. Download `Zephyr-v0.2.2-windows-x64.exe` and run it. There is no installer.
 3. Look for the new icon in the notification area (click the `^` arrow if Windows hides it, and drag the icon out to keep it visible).
 
 > **SmartScreen note:** the EXE is not code-signed yet, so Windows may show "Windows protected your PC". Click *More info*, then *Run anyway*. You can compare the file against the SHA256 checksum published in the release, or build it yourself from source (below).
 
 Requires Windows 10 or 11 (64-bit) and an internet connection.
+
+Tip: keep the EXE in a permanent folder (for example `%LOCALAPPDATA%\Zephyr`) before enabling *Start with Windows*. If you later move or update the file, just run it once and the startup entry fixes itself.
 
 ## Usage
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2
+
+### Fixed
+- "Start with Windows" stopped working if the EXE was moved, renamed or replaced by a newer version. Zephyr now refreshes the startup entry to its own location every time it runs.
+
 ## 0.2.1
 
 ### Fixed

@@ -72,7 +72,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let city_item = MenuItem::new("Change City...", true, None);
     let celsius_item = CheckMenuItem::new("Use Celsius (\u{b0}C)", true, cfg.celsius, None);
     let alerts_item = CheckMenuItem::new("Rain alerts", true, cfg.rain_alerts, None);
-    let startup_item = CheckMenuItem::new("Start with Windows", true, autostart::is_enabled(), None);
+    // If "Start with Windows" is on, re-register this EXE's current path so the
+    // entry never points at an old, moved or deleted file.
+    let start_with_windows = autostart::is_enabled();
+    if start_with_windows {
+        let _ = autostart::set(true);
+    }
+    let startup_item = CheckMenuItem::new("Start with Windows", true, start_with_windows, None);
     let about_item = MenuItem::new(format!("Zephyr v{} - project page", env!("CARGO_PKG_VERSION")), true, None);
     let exit_item = MenuItem::new("Exit", true, None);
 
