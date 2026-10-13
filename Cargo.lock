@@ -4111,7 +4111,7 @@ dependencies = [
 
 [[package]]
 name = "zephyr"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "chrono",
  "native-windows-gui",

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3
+
+### Fixed
+- Right after Windows starts the network is often not ready, and Zephyr waited 2 minutes before trying again. It now retries after 5, 10, 20 and 40 seconds (then every 2 minutes at most), so the weather appears within seconds of the connection coming up.
+- The tooltip said "Tmrw"; it now spells out "Tomorrow".
+
 ## 0.2.2
 
 ### Fixed

@@ -80,6 +80,13 @@ fn parse_forecast(body: &str) -> Result<Weather, String> {
     })
 }
 
+/// Delay before retry number `failures` (1-based): 5s, 10s, 20s, 40s, 80s, then 120s.
+/// Starting fast matters because the network is often not ready yet right after boot.
+pub fn retry_delay(failures: u32) -> std::time::Duration {
+    let secs = 5u64.saturating_mul(1 << failures.saturating_sub(1).min(5));
+    std::time::Duration::from_secs(secs.min(120))
+}
+
 pub fn http_client() -> reqwest::Client {
     reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(15))
@@ -143,13 +150,13 @@ pub const TOOLTIP_MAX: usize = 63;
 
 pub fn format_tooltip(city: &City, celsius: bool, w: &Weather, footer: &str) -> String {
     let u = if celsius { "C" } else { "F" };
-    let umbrella = |p: u32| if p >= 30 { format!(" \u{2602}{p}%") } else { String::new() };
+    let umbrella = |p: u32| if p >= 30 { format!("\u{2602}{p}%") } else { String::new() };
     let name: String = city.name.chars().take(12).collect();
-    let rain = if w.current_rain { " Rain" } else { "" };
+    let rain = if w.current_rain { "\u{2602}" } else { "" };
     let mut lines = vec![
         format!("{} {:.1}\u{b0}{}{}", name, w.current_temp, u, rain),
-        format!("Today {:.0}\u{b0}/{:.0}\u{b0}{}{}", w.today_max, w.today_min, u, umbrella(w.today_rain_prob)),
-        format!("Tmrw {:.0}\u{b0}/{:.0}\u{b0}{}{}", w.tomorrow_max, w.tomorrow_min, u, umbrella(w.tomorrow_rain_prob)),
+        format!("Today {:.0}\u{b0}/{:.0}\u{b0}{}", w.today_max, w.today_min, umbrella(w.today_rain_prob)),
+        format!("Tomorrow {:.0}\u{b0}/{:.0}\u{b0}{}", w.tomorrow_max, w.tomorrow_min, umbrella(w.tomorrow_rain_prob)),
         footer.to_string(),
     ];
     let units = |s: &str| s.encode_utf16().count();
@@ -175,6 +182,12 @@ mod tests {
             "precipitation_probability_max": [45, null]
         }
     }"#;
+
+    #[test]
+    fn retry_delay_backs_off_and_caps() {
+        let secs: Vec<u64> = (1..=8).map(|n| retry_delay(n).as_secs()).collect();
+        assert_eq!(secs, vec![5, 10, 20, 40, 80, 120, 120, 120]);
+    }
 
     #[test]
     fn rain_codes() {
@@ -204,10 +217,19 @@ mod tests {
     fn tooltip_typical_case_keeps_every_line() {
         let w = parse_forecast(SAMPLE).unwrap();
         let t = format_tooltip(&City::default(), false, &w, "Upd 14:05");
-        assert!(t.starts_with("Sanger 71.6\u{b0}F Rain"));
+        assert!(t.starts_with("Sanger 71.6\u{b0}F\u{2602}"));
         assert!(t.contains("\u{2602}45%"));
+        assert!(t.contains("Tomorrow 88\u{b0}/59\u{b0}"));
         assert!(t.ends_with("Upd 14:05"));
         assert!(t.encode_utf16().count() <= TOOLTIP_MAX);
+    }
+
+    #[test]
+    fn tooltip_keeps_footer_with_rain_on_both_days() {
+        let mut w = parse_forecast(SAMPLE).unwrap();
+        w.tomorrow_rain_prob = 40;
+        let t = format_tooltip(&City::default(), false, &w, "Upd 22:52");
+        assert!(t.ends_with("Upd 22:52"), "footer was dropped: {t}");
     }
 
     #[test]

@@ -18,7 +18,6 @@ use winit::event::Event;
 use winit::event_loop::{ControlFlow, EventLoopBuilder};
 
 const REFRESH_EVERY: Duration = Duration::from_secs(30 * 60);
-const RETRY_AFTER_FAILURE: Duration = Duration::from_secs(2 * 60);
 const RAIN_ALERT_THRESHOLD: u32 = 50;
 const PROJECT_URL: &str = "https://github.com/alimwork85-web/Zephyr";
 
@@ -109,15 +108,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let _ = menu_proxy.send_event(UserEvent::Menu(e.id));
     }));
 
-    // Background fetcher: fetches now, then every 30 minutes (2 after a failure),
+    // Background fetcher: fetches now, then every 30 minutes (after a failure it retries
+    // quickly, 5s then doubling up to 2 minutes, since the network may not be up yet at boot),
     // or immediately whenever `refresh` is notified.
     {
         let (client, shared, refresh, proxy) = (client.clone(), shared.clone(), refresh.clone(), proxy.clone());
         rt.spawn(async move {
+            let mut failures = 0u32;
             loop {
                 let current = lock(&shared).clone();
                 let result = weather::fetch_weather(&client, &current).await;
-                let wait = if result.is_ok() { REFRESH_EVERY } else { RETRY_AFTER_FAILURE };
+                let wait = if result.is_ok() {
+                    failures = 0;
+                    REFRESH_EVERY
+                } else {
+                    failures += 1;
+                    weather::retry_delay(failures)
+                };
                 if proxy.send_event(UserEvent::Weather(result)).is_err() {
                     break;
                 }
