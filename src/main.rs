@@ -138,7 +138,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let rt_handle = rt.handle().clone();
     let mut latest: Option<Weather> = None;
-    let mut updated = String::new();
     let mut alerted_on: Option<chrono::NaiveDate> = None;
 
     event_loop.run(move |event, elwt| {
@@ -154,7 +153,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         match event {
             UserEvent::Weather(Ok(w)) => {
-                updated = Local::now().format("%H:%M").to_string();
+                let updated = Local::now().format("%H:%M").to_string();
                 show(&tray, &cfg, Some(&w), &format!("Upd {updated}"), false);
                 let today = Local::now().date_naive();
                 if cfg.rain_alerts && w.today_rain_prob >= RAIN_ALERT_THRESHOLD && alerted_on != Some(today) {
