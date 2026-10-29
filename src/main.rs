@@ -52,14 +52,14 @@ fn show(tray: &TrayIcon, cfg: &Config, w: Option<&Weather>, footer: &str, failed
     }
 }
 
-fn notify_rain(city: &City, prob: u32) {
+fn notify_rain(city: &City, at: &str) {
     let mut n = notify_rust::Notification::new();
     if let Some(id) = TOAST_APP_ID.get() {
         n.app_id(id);
     }
     let _ = n
-        .summary(&format!("Rain expected in {}", city.name))
-        .body(&format!("{prob}% chance of rain today. Take an umbrella."))
+        .summary(&format!("Rain expected around {at} in {}", city.name))
+        .body("Within the next hour. Take an umbrella.")
         .show();
 }
 
@@ -149,7 +149,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let rt_handle = rt.handle().clone();
     let mut latest: Option<Weather> = None;
-    let mut alerted_on: Option<chrono::NaiveDate> = None;
+    let mut rain_alerted = false;
 
     event_loop.run(move |event, elwt| {
         elwt.set_control_flow(ControlFlow::Wait);
@@ -166,10 +166,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             UserEvent::Weather(Ok(w)) => {
                 let updated = Local::now().format("%H:%M").to_string();
                 show(&tray, &cfg, Some(&w), &format!("Upd {updated}"), false);
-                let today = Local::now().date_naive();
-                if cfg.rain_alerts && w.today_rain_prob >= RAIN_ALERT_THRESHOLD && alerted_on != Some(today) {
-                    notify_rain(&cfg.city, w.today_rain_prob);
-                    alerted_on = Some(today);
+                // One alert per rain episode; a dry forecast ends the episode.
+                if let Some(at) = &w.rain_starts {
+                    if cfg.rain_alerts && !rain_alerted {
+                        notify_rain(&cfg.city, at);
+                        rain_alerted = true;
+                    }
+                } else {
+                    rain_alerted = false;
                 }
                 latest = Some(w);
             }
@@ -180,7 +184,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             UserEvent::CityChosen(city) => {
                 cfg.city = city;
                 latest = None;
-                alerted_on = None;
+                rain_alerted = false;
                 show(&tray, &cfg, None, "", false);
                 apply(&cfg);
             }

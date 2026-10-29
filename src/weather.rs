@@ -14,18 +14,28 @@ pub struct Weather {
     pub tomorrow_max: f64,
     pub tomorrow_min: f64,
     pub tomorrow_rain_prob: u32,
+    /// `HH:MM` of the first wet 15-minute slot within the next hour.
+    pub rain_starts: Option<String>,
 }
 
 #[derive(Deserialize)]
 struct ForecastResponse {
     current_weather: CurrentWeather,
     daily: Daily,
+    minutely_15: Option<Minutely15>,
 }
 
 #[derive(Deserialize)]
 struct CurrentWeather {
+    time: String,
     temperature: f64,
     weathercode: u32,
+}
+
+#[derive(Deserialize)]
+struct Minutely15 {
+    time: Vec<String>,
+    precipitation: Vec<Option<f64>>,
 }
 
 #[derive(Deserialize)]
@@ -77,6 +87,22 @@ fn parse_forecast(body: &str) -> Result<Weather, String> {
         tomorrow_max: d.temperature_2m_max[1],
         tomorrow_min: d.temperature_2m_min[1],
         tomorrow_rain_prob: prob(1),
+        rain_starts: r
+            .minutely_15
+            .as_ref()
+            .and_then(|m| rain_start(&r.current_weather.time, m)),
+    })
+}
+
+/// First 15-minute slot after `now` (and within the hour) with real precipitation.
+fn rain_start(now: &str, m: &Minutely15) -> Option<String> {
+    const FMT: &str = "%Y-%m-%dT%H:%M";
+    let now = chrono::NaiveDateTime::parse_from_str(now, FMT).ok()?;
+    m.time.iter().zip(&m.precipitation).find_map(|(t, mm)| {
+        let at = chrono::NaiveDateTime::parse_from_str(t, FMT).ok()?;
+        let ahead = at.signed_duration_since(now).num_minutes();
+        (ahead > 0 && ahead <= 60 && mm.unwrap_or(0.0) >= 0.1)
+            .then(|| at.format("%H:%M").to_string())
     })
 }
 
@@ -107,6 +133,8 @@ pub async fn fetch_weather(client: &reqwest::Client, cfg: &Config) -> Result<Wea
                 "daily",
                 "temperature_2m_max,temperature_2m_min,precipitation_probability_max".to_string(),
             ),
+            ("minutely_15", "precipitation".to_string()),
+            ("forecast_minutely_15", "8".to_string()),
             ("temperature_unit", unit.to_string()),
             ("timezone", "auto".to_string()),
         ])
@@ -175,11 +203,39 @@ mod tests {
     use super::*;
 
     const SAMPLE: &str = r#"{
-        "current_weather": {"temperature": 71.6, "weathercode": 61},
+        "current_weather": {"time": "2026-10-28T14:00", "temperature": 71.6, "weathercode": 61},
         "daily": {
             "temperature_2m_max": [90.1, 88.0],
             "temperature_2m_min": [60.4, 58.9],
             "precipitation_probability_max": [45, null]
+        }
+    }"#;
+
+    /// Wet slot 30 minutes after `current_weather.time`, dry slots on either side.
+    const RAIN_SOON: &str = r#"{
+        "current_weather": {"time": "2026-10-28T14:00", "temperature": 60.0, "weathercode": 3},
+        "daily": {
+            "temperature_2m_max": [70.0, 71.0],
+            "temperature_2m_min": [50.0, 51.0],
+            "precipitation_probability_max": [10, 20]
+        },
+        "minutely_15": {
+            "time": ["2026-10-28T14:00", "2026-10-28T14:15", "2026-10-28T14:30", "2026-10-28T14:45"],
+            "precipitation": [0.0, 0.0, 0.4, 1.2]
+        }
+    }"#;
+
+    /// First wet slot is 90 minutes ahead, outside the alert window.
+    const RAIN_LATER: &str = r#"{
+        "current_weather": {"time": "2026-10-28T14:00", "temperature": 60.0, "weathercode": 3},
+        "daily": {
+            "temperature_2m_max": [70.0, 71.0],
+            "temperature_2m_min": [50.0, 51.0],
+            "precipitation_probability_max": [10, 20]
+        },
+        "minutely_15": {
+            "time": ["2026-10-28T14:45", "2026-10-28T15:30"],
+            "precipitation": [0.0, 0.5]
         }
     }"#;
 
@@ -233,6 +289,24 @@ mod tests {
     }
 
     #[test]
+    fn rain_within_the_hour_sets_time() {
+        let w = parse_forecast(RAIN_SOON).unwrap();
+        assert_eq!(w.rain_starts.as_deref(), Some("14:30"));
+    }
+
+    #[test]
+    fn rain_beyond_the_hour_is_ignored() {
+        let w = parse_forecast(RAIN_LATER).unwrap();
+        assert_eq!(w.rain_starts, None);
+    }
+
+    #[test]
+    fn missing_minutely_data_means_no_rain_alert() {
+        let w = parse_forecast(SAMPLE).unwrap();
+        assert_eq!(w.rain_starts, None);
+    }
+
+    #[test]
     fn tooltip_never_exceeds_limit() {
         let w = Weather {
             current_temp: -123.4,
@@ -243,6 +317,7 @@ mod tests {
             tomorrow_max: 120.0,
             tomorrow_min: -110.0,
             tomorrow_rain_prob: 100,
+            rain_starts: Some("14:30".into()),
         };
         let mut city = City::default();
         city.name = "Llanfairpwllgwyngyll".into();
