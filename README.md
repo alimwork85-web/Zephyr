@@ -10,15 +10,17 @@ Built in Rust. About 2 MB, around 20 MB of RAM, and free forever (MIT).
 - **Hover for details.** Now, today's high/low, tomorrow's high/low, and an umbrella with the rain chance when it is 30% or more.
 - **Any city in the world.** Right-click, choose *Change City...*, type a name and pick from the results. Your choice is remembered.
 - **Celsius or Fahrenheit.** One click in the menu.
-- **Rain alerts.** One Windows notification per day when rain is 50% or more likely. Turn it off from the menu.
+- **Rain alerts.** One Windows notification when rain starts within the next hour, with the time it begins. Turn it off from the menu.
+- **Air quality alerts.** One notification a day when the air is unhealthy (AQI 101 or worse), with the category. Turn it off from the menu.
+- **Severe weather alerts.** Official US National Weather Service warnings (severe or extreme) for your city, each one notified once. United States only; elsewhere this is skipped silently.
 - **Start with Windows.** Optional, from the menu. No admin rights needed.
 - **Always fresh.** Updates every 30 minutes, retries quickly (5 seconds, then longer) if the connection is not ready or drops, and says so in the tooltip instead of showing wrong numbers.
-- **Private.** No accounts, no tracking, no analytics. The only network calls are to the free [Open-Meteo](https://open-meteo.com/) weather and geocoding APIs.
+- **Private.** No accounts, no tracking, no analytics. The only network calls are to the free [Open-Meteo](https://open-meteo.com/) forecast and air-quality APIs and to [api.weather.gov](https://api.weather.gov/) for US warnings.
 
 ## Download
 
 1. Open the [latest release](https://github.com/alimwork85-web/Zephyr/releases/latest).
-2. Download `Zephyr-v0.2.3-windows-x64.exe` and run it. There is no installer.
+2. Download `Zephyr-v0.3.0-windows-x64.exe` and run it. There is no installer.
 3. Look for the new icon in the notification area (click the `^` arrow if Windows hides it, and drag the icon out to keep it visible).
 
 > **SmartScreen note:** the EXE is not code-signed yet, so Windows may show "Windows protected your PC". Click *More info*, then *Run anyway*. You can compare the file against the SHA256 checksum published in the release, or build it yourself from source (below).
@@ -35,7 +37,9 @@ Tip: keep the EXE in a permanent folder (for example `%LOCALAPPDATA%\Zephyr`) be
 | Refresh now | Right-click, *Refresh Now* |
 | Change city | Right-click, *Change City...*, search, select, *Use this city* |
 | Switch units | Right-click, *Use Celsius* |
-| Rain notifications | Right-click, *Rain alerts* |
+| Rain notifications | Right-click, *Rain alerts* (rain starting within the hour) |
+| Air quality notifications | Right-click, *Air quality alerts* |
+| Severe weather notifications | Right-click, *Severe weather alerts* (US only) |
 | Launch at sign-in | Right-click, *Start with Windows* |
 | Quit | Right-click, *Exit* |
 

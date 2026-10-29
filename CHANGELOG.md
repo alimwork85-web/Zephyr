@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0
+
+### Added
+- **Rain in the next hour.** A notification when rain starts within the next 60 minutes, with the time it begins. Data refreshes every 30 minutes, so the warning comes at least about half an hour ahead.
+- **Air quality alerts.** One notification a day when the US AQI reaches 101 (unhealthy for sensitive groups) or worse, with the EPA category.
+- **Official US warnings.** Active severe or extreme National Weather Service warnings for your city, each one notified once. US only.
+- Menu switches for the air quality and severe weather alerts.
+
+### Changed
+- Notifications show "Zephyr" as the sender instead of "Windows PowerShell".
+- Publisher, author and copyright are Ali Alhumedi in the EXE, the Cargo package and the license.
+- The HTTP user agent now carries the project URL, as api.weather.gov asks for.
+
+### Fixed
+- The *Change City* window froze for up to 15 seconds while searching. The search now runs in the background: the window can be moved and closed, and the Search button stays disabled until the results arrive.
+
 ## 0.2.3
 
 ### Fixed
