@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+PackageIdentifier: AliAlhumedi.Zephyr
+PackageVersion: 0.3.0
+PackageLocale: en-US
+Publisher: Ali Alhumedi
+PublisherUrl: https://github.com/alimwork85-web
+PublisherSupportUrl: https://github.com/alimwork85-web/Zephyr/issues
+PackageName: Zephyr
+PackageUrl: https://github.com/alimwork85-web/Zephyr
+License: MIT
+LicenseUrl: https://github.com/alimwork85-web/Zephyr/blob/main/LICENSE
+Copyright: © 2026 Ali Alhumedi
+ShortDescription: Tiny Windows tray weather app with rain, air quality and US severe weather alerts.
+Description: Zephyr draws the current temperature in the system tray icon and shows today and tomorrow on hover. It notifies you when rain starts within the next hour, when the air quality is unhealthy, and when the US National Weather Service has a severe warning for your city. About 2 MB, around 20 MB of RAM, no installer and no account.
+Moniker: zephyr
+Tags:
+  - weather
+  - tray
+  - notifications
+  - air-quality
+ReleaseNotesUrl: https://github.com/alimwork85-web/Zephyr/blob/main/CHANGELOG.md
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

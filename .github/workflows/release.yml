@@ -1,0 +1,42 @@
+name: release
+
+# Builds the EXE for a tag. It does not publish a release: download the
+# artifact, rename nothing, and upload it to the release by hand.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test
+        run: cargo test
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Name the EXE and checksum it
+        shell: bash
+        run: |
+          version=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
+          asset="Zephyr-v${version}-windows-x64.exe"
+          cp target/release/zephyr.exe "$asset"
+          sha256sum "$asset" > "$asset.sha256"
+          cat "$asset.sha256"
+
+      # Signing placeholder: add a SignPath step here (https://signpath.org)
+      # before the upload, signing Zephyr-v*-windows-x64.exe, so SmartScreen
+      # stops warning about an unknown publisher.
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zephyr-windows-x64
+          path: |
+            Zephyr-v*-windows-x64.exe
+            Zephyr-v*-windows-x64.exe.sha256

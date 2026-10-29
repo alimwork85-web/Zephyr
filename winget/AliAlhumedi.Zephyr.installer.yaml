@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+# Before submitting: the InstallerSha256 below belongs to a local build. Replace
+# it with the value in the release's Zephyr-v0.3.0-windows-x64.exe.sha256 file,
+# because every rebuild produces a different hash.
+PackageIdentifier: AliAlhumedi.Zephyr
+PackageVersion: 0.3.0
+InstallerType: portable
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/alimwork85-web/Zephyr/releases/download/v0.3.0/Zephyr-v0.3.0-windows-x64.exe
+    InstallerSha256: 7B7E4B3CD2DB7A17D4BABD83658946043C02B961FC48ECEFC19EB2CD857F4720
+    InstallerType: portable
+ManifestType: installer
+ManifestVersion: 1.6.0
