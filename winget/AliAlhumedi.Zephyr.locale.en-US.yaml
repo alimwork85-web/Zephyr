@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
 PackageIdentifier: AliAlhumedi.Zephyr
-PackageVersion: 0.3.0
+PackageVersion: 0.3.1
 PackageLocale: en-US
 Publisher: Ali Alhumedi
 PublisherUrl: https://github.com/alimwork85-web

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+### Changed
+- The README is now bilingual: English first, then Arabic the same content.
+- No code change; the EXE is identical to 0.3.0.
+
 ## 0.3.0
 
 ### Added
