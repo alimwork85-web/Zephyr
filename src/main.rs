@@ -8,7 +8,7 @@ mod weather;
 
 use chrono::Local;
 use config::{City, Config};
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 use std::time::Duration;
 use tokio::sync::Notify;
 use tray_icon::menu::{CheckMenuItem, Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem};
@@ -20,6 +20,8 @@ use winit::event_loop::{ControlFlow, EventLoopBuilder};
 const REFRESH_EVERY: Duration = Duration::from_secs(30 * 60);
 const RAIN_ALERT_THRESHOLD: u32 = 50;
 const PROJECT_URL: &str = "https://github.com/alimwork85-web/Zephyr";
+const APP_ID: &str = "Zephyr.WeatherTray";
+static TOAST_APP_ID: OnceLock<&str> = OnceLock::new();
 
 enum UserEvent {
     Menu(MenuId),
@@ -51,7 +53,11 @@ fn show(tray: &TrayIcon, cfg: &Config, w: Option<&Weather>, footer: &str, failed
 }
 
 fn notify_rain(city: &City, prob: u32) {
-    let _ = notify_rust::Notification::new()
+    let mut n = notify_rust::Notification::new();
+    if let Some(id) = TOAST_APP_ID.get() {
+        n.app_id(id);
+    }
+    let _ = n
         .summary(&format!("Rain expected in {}", city.name))
         .body(&format!("{prob}% chance of rain today. Take an umbrella."))
         .show();
@@ -66,6 +72,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut cfg = Config::load();
     let shared = Arc::new(Mutex::new(cfg.clone()));
     let refresh = Arc::new(Notify::new());
+
+    // Names the notification sender; without it Windows shows "Windows PowerShell".
+    if autostart::register_app_id(APP_ID) {
+        let _ = TOAST_APP_ID.set(APP_ID);
+    }
 
     let refresh_item = MenuItem::new("Refresh Now", true, None);
     let city_item = MenuItem::new("Change City...", true, None);

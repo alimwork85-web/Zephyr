@@ -24,3 +24,11 @@ pub fn set(enabled: bool) -> std::io::Result<()> {
         }
     }
 }
+
+/// Names the toast sender: without this entry Windows shows "Windows PowerShell".
+pub fn register_app_id(app_id: &str) -> bool {
+    RegKey::predef(HKEY_CURRENT_USER)
+        .create_subkey(format!(r"Software\Classes\AppUserModelId\{app_id}"))
+        .and_then(|(key, _)| key.set_value("DisplayName", &"Zephyr"))
+        .is_ok()
+}
