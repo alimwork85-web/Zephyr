@@ -3,6 +3,7 @@ use serde::Deserialize;
 
 const FORECAST_URL: &str = "https://api.open-meteo.com/v1/forecast";
 const GEOCODE_URL: &str = "https://geocoding-api.open-meteo.com/v1/search";
+const AIR_URL: &str = "https://air-quality-api.open-meteo.com/v1/air-quality";
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Weather {
@@ -48,6 +49,16 @@ struct Daily {
 #[derive(Deserialize)]
 struct GeocodeResponse {
     results: Option<Vec<GeocodeResult>>,
+}
+
+#[derive(Deserialize)]
+struct AirResponse {
+    hourly: Option<AirHourly>,
+}
+
+#[derive(Deserialize)]
+struct AirHourly {
+    us_aqi: Vec<Option<f64>>,
 }
 
 #[derive(Deserialize)]
@@ -146,6 +157,52 @@ pub async fn fetch_weather(client: &reqwest::Client, cfg: &Config) -> Result<Wea
         .await
         .map_err(|e| e.to_string())?;
     parse_forecast(&body)
+}
+
+/// Worst US AQI for today: the air API answers hourly, with nulls for gaps.
+pub async fn fetch_aqi(client: &reqwest::Client, city: &City) -> Result<u32, String> {
+    let body = client
+        .get(AIR_URL)
+        .query(&[
+            ("latitude", city.latitude.to_string()),
+            ("longitude", city.longitude.to_string()),
+            ("hourly", "us_aqi".to_string()),
+            ("forecast_days", "1".to_string()),
+            ("timezone", "auto".to_string()),
+        ])
+        .send()
+        .await
+        .and_then(|r| r.error_for_status())
+        .map_err(|e| e.to_string())?
+        .text()
+        .await
+        .map_err(|e| e.to_string())?;
+    parse_aqi(&body)
+}
+
+fn parse_aqi(body: &str) -> Result<u32, String> {
+    let r: AirResponse = serde_json::from_str(body).map_err(|e| format!("bad air data: {e}"))?;
+    let top = r
+        .hourly
+        .iter()
+        .flat_map(|h| &h.us_aqi)
+        .filter_map(|v| *v)
+        .fold(f64::NAN, f64::max);
+    if top.is_nan() {
+        return Err("air quality data has no values".into());
+    }
+    Ok(top.round() as u32)
+}
+
+pub fn aqi_category(aqi: u32) -> &'static str {
+    match aqi {
+        0..=50 => "Good",
+        51..=100 => "Moderate",
+        101..=150 => "Unhealthy for Sensitive Groups",
+        151..=200 => "Unhealthy",
+        201..=300 => "Very Unhealthy",
+        _ => "Hazardous",
+    }
 }
 
 pub async fn search_cities(client: &reqwest::Client, query: &str) -> Result<Vec<City>, String> {
@@ -304,6 +361,26 @@ mod tests {
     fn missing_minutely_data_means_no_rain_alert() {
         let w = parse_forecast(SAMPLE).unwrap();
         assert_eq!(w.rain_starts, None);
+    }
+
+    #[test]
+    fn aqi_takes_daily_max_and_skips_nulls() {
+        let body = r#"{"hourly": {"time": ["2026-10-28T00:00", "2026-10-28T01:00", "2026-10-28T02:00"],
+                                 "us_aqi": [42, null, 118]}}"#;
+        assert_eq!(parse_aqi(body).unwrap(), 118);
+        let all_null = r#"{"hourly": {"time": ["2026-10-28T00:00"], "us_aqi": [null]}}"#;
+        assert!(parse_aqi(all_null).is_err());
+        assert!(parse_aqi("{}").is_err());
+    }
+
+    #[test]
+    fn aqi_categories_match_epa_boundaries() {
+        assert_eq!(aqi_category(100), "Moderate");
+        assert_eq!(aqi_category(101), "Unhealthy for Sensitive Groups");
+        assert_eq!(aqi_category(150), "Unhealthy for Sensitive Groups");
+        assert_eq!(aqi_category(151), "Unhealthy");
+        assert_eq!(aqi_category(300), "Very Unhealthy");
+        assert_eq!(aqi_category(301), "Hazardous");
     }
 
     #[test]

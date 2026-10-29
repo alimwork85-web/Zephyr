@@ -26,6 +26,7 @@ static TOAST_APP_ID: OnceLock<&str> = OnceLock::new();
 enum UserEvent {
     Menu(MenuId),
     Weather(Result<Weather, String>),
+    AirQuality(u32),
     CityChosen(City),
 }
 
@@ -63,6 +64,20 @@ fn notify_rain(city: &City, at: &str) {
         .show();
 }
 
+fn notify_air(city: &City, aqi: u32) {
+    let mut n = notify_rust::Notification::new();
+    if let Some(id) = TOAST_APP_ID.get() {
+        n.app_id(id);
+    }
+    let _ = n
+        .summary(&format!(
+            "Air quality in {}: {} (AQI {aqi})",
+            city.name,
+            weather::aqi_category(aqi)
+        ))
+        .show();
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let rt = tokio::runtime::Runtime::new()?;
     let client = weather::http_client();
@@ -82,6 +97,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let city_item = MenuItem::new("Change City...", true, None);
     let celsius_item = CheckMenuItem::new("Use Celsius (\u{b0}C)", true, cfg.celsius, None);
     let alerts_item = CheckMenuItem::new("Rain alerts", true, cfg.rain_alerts, None);
+    let air_item = CheckMenuItem::new("Air quality alerts", true, cfg.air_alerts, None);
     // If "Start with Windows" is on, re-register this EXE's current path so the
     // entry never points at an old, moved or deleted file.
     let start_with_windows = autostart::is_enabled();
@@ -99,6 +115,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &PredefinedMenuItem::separator(),
         &celsius_item,
         &alerts_item,
+        &air_item,
         &startup_item,
         &PredefinedMenuItem::separator(),
         &about_item,
@@ -126,10 +143,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (client, shared, refresh, proxy) = (client.clone(), shared.clone(), refresh.clone(), proxy.clone());
         rt.spawn(async move {
             let mut failures = 0u32;
+            let mut aqi_day: Option<chrono::NaiveDate> = None;
             loop {
                 let current = lock(&shared).clone();
                 let result = weather::fetch_weather(&client, &current).await;
-                let wait = if result.is_ok() {
+                let ok = result.is_ok();
+                let wait = if ok {
                     failures = 0;
                     REFRESH_EVERY
                 } else {
@@ -138,6 +157,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 };
                 if proxy.send_event(UserEvent::Weather(result)).is_err() {
                     break;
+                }
+                // Air quality changes slowly, so one successful fetch a day is enough.
+                let today = Local::now().date_naive();
+                if ok && aqi_day != Some(today) {
+                    if let Ok(aqi) = weather::fetch_aqi(&client, &current.city).await {
+                        aqi_day = Some(today);
+                        if proxy.send_event(UserEvent::AirQuality(aqi)).is_err() {
+                            break;
+                        }
+                    }
                 }
                 tokio::select! {
                     _ = tokio::time::sleep(wait) => {}
@@ -150,6 +179,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let rt_handle = rt.handle().clone();
     let mut latest: Option<Weather> = None;
     let mut rain_alerted = false;
+    let mut air_alerted_on: Option<chrono::NaiveDate> = None;
 
     event_loop.run(move |event, elwt| {
         elwt.set_control_flow(ControlFlow::Wait);
@@ -181,6 +211,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Some(w) => show(&tray, &cfg, Some(w), "Offline", true),
                 None => show(&tray, &cfg, None, "", true),
             },
+            UserEvent::AirQuality(aqi) => {
+                let today = Local::now().date_naive();
+                if cfg.air_alerts && aqi >= 101 && air_alerted_on != Some(today) {
+                    notify_air(&cfg.city, aqi);
+                    air_alerted_on = Some(today);
+                }
+            }
             UserEvent::CityChosen(city) => {
                 cfg.city = city;
                 latest = None;
@@ -205,6 +242,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 } else if id == *alerts_item.id() {
                     cfg.rain_alerts = !cfg.rain_alerts;
                     alerts_item.set_checked(cfg.rain_alerts);
+                    cfg.save();
+                    *lock(&shared) = cfg.clone();
+                } else if id == *air_item.id() {
+                    cfg.air_alerts = !cfg.air_alerts;
+                    air_item.set_checked(cfg.air_alerts);
                     cfg.save();
                     *lock(&shared) = cfg.clone();
                 } else if id == *startup_item.id() {
