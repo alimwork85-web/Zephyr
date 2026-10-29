@@ -9,11 +9,12 @@ mod weather;
 use chrono::Local;
 use config::{City, Config};
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
+use std::collections::HashSet;
 use std::time::Duration;
 use tokio::sync::Notify;
 use tray_icon::menu::{CheckMenuItem, Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem};
 use tray_icon::{TrayIcon, TrayIconBuilder};
-use weather::Weather;
+use weather::{NwsAlert, Weather};
 use winit::event::Event;
 use winit::event_loop::{ControlFlow, EventLoopBuilder};
 
@@ -27,6 +28,7 @@ enum UserEvent {
     Menu(MenuId),
     Weather(Result<Weather, String>),
     AirQuality(u32),
+    Alerts(Vec<NwsAlert>),
     CityChosen(City),
 }
 
@@ -78,6 +80,18 @@ fn notify_air(city: &City, aqi: u32) {
         .show();
 }
 
+fn notify_alert(a: &NwsAlert) {
+    let mut n = notify_rust::Notification::new();
+    if let Some(id) = TOAST_APP_ID.get() {
+        n.app_id(id);
+    }
+    n.summary(&a.event);
+    if let Some(headline) = &a.headline {
+        n.body(headline);
+    }
+    let _ = n.show();
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let rt = tokio::runtime::Runtime::new()?;
     let client = weather::http_client();
@@ -98,6 +112,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let celsius_item = CheckMenuItem::new("Use Celsius (\u{b0}C)", true, cfg.celsius, None);
     let alerts_item = CheckMenuItem::new("Rain alerts", true, cfg.rain_alerts, None);
     let air_item = CheckMenuItem::new("Air quality alerts", true, cfg.air_alerts, None);
+    let severe_item = CheckMenuItem::new("Severe weather alerts", true, cfg.severe_alerts, None);
     // If "Start with Windows" is on, re-register this EXE's current path so the
     // entry never points at an old, moved or deleted file.
     let start_with_windows = autostart::is_enabled();
@@ -116,6 +131,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &celsius_item,
         &alerts_item,
         &air_item,
+        &severe_item,
         &startup_item,
         &PredefinedMenuItem::separator(),
         &about_item,
@@ -168,6 +184,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                 }
+                // Official warnings change any time; ask on every successful pass.
+                if ok {
+                    if let Ok(alerts) = weather::fetch_nws_alerts(&client, &current.city).await {
+                        if proxy.send_event(UserEvent::Alerts(alerts)).is_err() {
+                            break;
+                        }
+                    }
+                }
                 tokio::select! {
                     _ = tokio::time::sleep(wait) => {}
                     _ = refresh.notified() => {}
@@ -180,6 +204,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut latest: Option<Weather> = None;
     let mut rain_alerted = false;
     let mut air_alerted_on: Option<chrono::NaiveDate> = None;
+    let mut seen_alerts: HashSet<String> = HashSet::new();
 
     event_loop.run(move |event, elwt| {
         elwt.set_control_flow(ControlFlow::Wait);
@@ -218,10 +243,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     air_alerted_on = Some(today);
                 }
             }
+            UserEvent::Alerts(alerts) => {
+                for alert in alerts {
+                    if seen_alerts.insert(alert.id.clone()) && cfg.severe_alerts {
+                        notify_alert(&alert);
+                    }
+                }
+            }
             UserEvent::CityChosen(city) => {
                 cfg.city = city;
                 latest = None;
                 rain_alerted = false;
+                seen_alerts.clear();
                 show(&tray, &cfg, None, "", false);
                 apply(&cfg);
             }
@@ -247,6 +280,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 } else if id == *air_item.id() {
                     cfg.air_alerts = !cfg.air_alerts;
                     air_item.set_checked(cfg.air_alerts);
+                    cfg.save();
+                    *lock(&shared) = cfg.clone();
+                } else if id == *severe_item.id() {
+                    cfg.severe_alerts = !cfg.severe_alerts;
+                    severe_item.set_checked(cfg.severe_alerts);
                     cfg.save();
                     *lock(&shared) = cfg.clone();
                 } else if id == *startup_item.id() {

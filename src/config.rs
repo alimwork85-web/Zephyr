@@ -27,6 +27,7 @@ pub struct Config {
     pub celsius: bool,
     pub rain_alerts: bool,
     pub air_alerts: bool,
+    pub severe_alerts: bool,
     pub city: City,
 }
 
@@ -36,6 +37,7 @@ impl Default for Config {
             celsius: false,
             rain_alerts: true,
             air_alerts: true,
+            severe_alerts: true,
             city: City {
                 name: "Sanger".into(),
                 region: "California".into(),
@@ -109,6 +111,7 @@ mod tests {
         let cfg: Config = toml::from_str("celsius = true\nrain_alerts = false").unwrap();
         assert!(!cfg.rain_alerts);
         assert!(cfg.air_alerts);
+        assert!(cfg.severe_alerts);
     }
 
     #[test]

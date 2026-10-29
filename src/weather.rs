@@ -4,6 +4,7 @@ use serde::Deserialize;
 const FORECAST_URL: &str = "https://api.open-meteo.com/v1/forecast";
 const GEOCODE_URL: &str = "https://geocoding-api.open-meteo.com/v1/search";
 const AIR_URL: &str = "https://air-quality-api.open-meteo.com/v1/air-quality";
+const NWS_URL: &str = "https://api.weather.gov/alerts/active";
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Weather {
@@ -59,6 +60,31 @@ struct AirResponse {
 #[derive(Deserialize)]
 struct AirHourly {
     us_aqi: Vec<Option<f64>>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct NwsAlert {
+    pub id: String,
+    pub event: String,
+    pub headline: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct NwsResponse {
+    features: Vec<NwsFeature>,
+}
+
+#[derive(Deserialize)]
+struct NwsFeature {
+    properties: NwsProperties,
+}
+
+#[derive(Deserialize)]
+struct NwsProperties {
+    id: String,
+    event: String,
+    headline: Option<String>,
+    severity: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -127,7 +153,12 @@ pub fn retry_delay(failures: u32) -> std::time::Duration {
 pub fn http_client() -> reqwest::Client {
     reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(15))
-        .user_agent(concat!("Zephyr/", env!("CARGO_PKG_VERSION")))
+        // api.weather.gov asks for a contact URL in the agent string.
+        .user_agent(concat!(
+            "Zephyr/",
+            env!("CARGO_PKG_VERSION"),
+            " (+https://github.com/alimwork85-web/Zephyr)"
+        ))
         .build()
         .unwrap_or_default()
 }
@@ -203,6 +234,42 @@ pub fn aqi_category(aqi: u32) -> &'static str {
         201..=300 => "Very Unhealthy",
         _ => "Hazardous",
     }
+}
+
+/// Active NWS warnings for the point, narrowed to the ones worth a notification.
+pub async fn fetch_nws_alerts(
+    client: &reqwest::Client,
+    city: &City,
+) -> Result<Vec<NwsAlert>, String> {
+    let body = client
+        .get(NWS_URL)
+        .query(&[(
+            "point",
+            format!("{:.4},{:.4}", city.latitude, city.longitude),
+        )])
+        .header("Accept", "application/geo+json")
+        .send()
+        .await
+        .and_then(|r| r.error_for_status())
+        .map_err(|e| e.to_string())?
+        .text()
+        .await
+        .map_err(|e| e.to_string())?;
+    parse_nws(&body)
+}
+
+fn parse_nws(body: &str) -> Result<Vec<NwsAlert>, String> {
+    let r: NwsResponse = serde_json::from_str(body).map_err(|e| format!("bad alert data: {e}"))?;
+    Ok(r.features
+        .into_iter()
+        .map(|f| f.properties)
+        .filter(|p| matches!(p.severity.as_deref(), Some("Severe") | Some("Extreme")))
+        .map(|p| NwsAlert {
+            id: p.id,
+            event: p.event,
+            headline: p.headline,
+        })
+        .collect())
 }
 
 pub async fn search_cities(client: &reqwest::Client, query: &str) -> Result<Vec<City>, String> {
@@ -381,6 +448,28 @@ mod tests {
         assert_eq!(aqi_category(151), "Unhealthy");
         assert_eq!(aqi_category(300), "Very Unhealthy");
         assert_eq!(aqi_category(301), "Hazardous");
+    }
+
+    #[test]
+    fn nws_keeps_only_severe_and_extreme() {
+        let body = r#"{"features": [
+            {"properties": {"id": "urn:a", "event": "Tornado Warning",
+                            "headline": "Tornado observed near Sanger", "severity": "Severe"}},
+            {"properties": {"id": "urn:b", "event": "Heat Advisory",
+                            "headline": "Hot and dry", "severity": "Moderate"}}
+        ]}"#;
+        let alerts = parse_nws(body).unwrap();
+        assert_eq!(alerts.len(), 1);
+        assert_eq!(alerts[0].id, "urn:a");
+        assert_eq!(alerts[0].event, "Tornado Warning");
+        assert_eq!(alerts[0].headline.as_deref(), Some("Tornado observed near Sanger"));
+    }
+
+    #[test]
+    fn nws_empty_collection_and_garbage() {
+        assert!(parse_nws(r#"{"features": []}"#).unwrap().is_empty());
+        assert!(parse_nws("not json").is_err());
+        assert!(parse_nws("{}").is_err());
     }
 
     #[test]
