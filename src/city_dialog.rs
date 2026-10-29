@@ -8,6 +8,7 @@ use native_windows_gui as nwg;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 
 static OPEN: AtomicBool = AtomicBool::new(false);
 
@@ -32,6 +33,8 @@ struct App {
     list: nwg::ListBox<String>,
     status: nwg::Label,
     choose: nwg::Button,
+    notice: nwg::Notice,
+    found: Arc<Mutex<Option<Result<Vec<City>, String>>>>,
     results: RefCell<Vec<City>>,
     rt: tokio::runtime::Handle,
     client: reqwest::Client,
@@ -41,14 +44,31 @@ struct App {
 impl App {
     fn do_search(&self) {
         let query = self.input.text();
-        let query = query.trim();
+        let query = query.trim().to_string();
         if query.chars().count() < 2 {
             self.status.set_text("Type at least 2 letters.");
             return;
         }
         self.search.set_enabled(false);
         self.status.set_text("Searching...");
-        let found = self.rt.block_on(weather::search_cities(&self.client, query));
+        // Search off the UI thread so the window keeps responding; the notice
+        // wakes the message loop when the result lands.
+        let (slot, sender, client) = (
+            Arc::clone(&self.found),
+            self.notice.sender(),
+            self.client.clone(),
+        );
+        self.rt.spawn(async move {
+            let cities = weather::search_cities(&client, &query).await;
+            *slot.lock().unwrap_or_else(|e| e.into_inner()) = Some(cities);
+            sender.notice();
+        });
+    }
+
+    fn show_found(&self) {
+        let Some(found) = self.found.lock().unwrap_or_else(|e| e.into_inner()).take() else {
+            return;
+        };
         self.search.set_enabled(true);
         match found {
             Ok(cities) if cities.is_empty() => {
@@ -94,6 +114,7 @@ fn run(
     let mut list = nwg::ListBox::<String>::default();
     let mut status = nwg::Label::default();
     let mut choose = nwg::Button::default();
+    let mut notice = nwg::Notice::default();
 
     nwg::Window::builder()
         .size((370, 310))
@@ -131,6 +152,7 @@ fn run(
         .position((10, 255))
         .size((350, 32))
         .build(&mut choose)?;
+    nwg::Notice::builder().parent(&window).build(&mut notice)?;
 
     let app = Rc::new(App {
         window,
@@ -139,6 +161,8 @@ fn run(
         list,
         status,
         choose,
+        notice,
+        found: Arc::new(Mutex::new(None)),
         results: RefCell::new(Vec::new()),
         rt,
         client,
@@ -152,6 +176,7 @@ fn run(
         match evt {
             E::OnWindowClose if handle == a.window.handle => nwg::stop_thread_dispatch(),
             E::OnButtonClick if handle == a.search.handle => a.do_search(),
+            E::OnNotice if handle == a.notice.handle => a.show_found(),
             E::OnButtonClick if handle == a.choose.handle => a.do_choose(),
             E::OnListBoxDoubleClick if handle == a.list.handle => a.do_choose(),
             _ => {}
