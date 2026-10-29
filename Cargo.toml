@@ -2,6 +2,7 @@
 name = "zephyr"
 version = "0.2.3"
 edition = "2021"
+authors = ["Ali Alhumedi"]
 description = "Lightweight Windows system tray weather app powered by Open-Meteo"
 license = "MIT"
 repository = "https://github.com/alimwork85-web/Zephyr"

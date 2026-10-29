@@ -28,7 +28,8 @@ fn main() {
         res.set_manifest(MANIFEST);
         res.set("ProductName", "Zephyr Weather Tray");
         res.set("FileDescription", "Zephyr - system tray weather");
-        res.set("LegalCopyright", "MIT License");
+        res.set("CompanyName", "Ali Alhumedi");
+        res.set("LegalCopyright", "© 2026 Ali Alhumedi");
         res.compile().unwrap();
     }
 }

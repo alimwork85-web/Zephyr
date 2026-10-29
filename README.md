@@ -64,4 +64,6 @@ Issues and pull requests are welcome. Ideas: more languages, hourly view, wind a
 
 ## License
 
-[MIT](LICENSE). Weather data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
+[MIT](LICENSE). Developed by Ali Alhumedi.
+
+Weather data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
