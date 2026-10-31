@@ -60,4 +60,6 @@ cargo build --release
 
 Keep reports short. Filter long command output (for example only the `test result` lines and errors).
 
+`dist/` holds the latest build only: delete the previous EXE and its `.sha256` in the same commit that adds the new one.
+
 Commit messages: short imperative summary, e.g. `Add air quality alert (AQI >= 101)`.
