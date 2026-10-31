@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2
+
+### Changed
+- **Umbrella icon.** While it is raining (now, or rain starting within the hour) the tray icon is a white umbrella instead of the temperature; the temperature stays one hover away in the tooltip. When it is dry the icon shows the temperature as before.
+- The blue rain strip at the bottom of the icon is gone: the umbrella replaces it.
+
 ## 0.3.1
 
 ### Changed
