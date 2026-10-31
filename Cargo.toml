@@ -1,6 +1,6 @@
 [package]
 name = "zephyr"
-version = "0.3.1"
+version = "0.3.2"
 edition = "2021"
 authors = ["Ali Alhumedi"]
 description = "Lightweight Windows system tray weather app powered by Open-Meteo"

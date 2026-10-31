@@ -20,7 +20,7 @@ Built in Rust. About 2 MB, around 20 MB of RAM, and free forever (MIT).
 ## Download
 
 1. Open the [latest release](https://github.com/alimwork85-web/Zephyr/releases/latest).
-2. Download `Zephyr-v0.3.1-windows-x64.exe` and run it. There is no installer.
+2. Download `Zephyr-v0.3.2-windows-x64.exe` and run it. There is no installer.
 3. Look for the new icon in the notification area (click the `^` arrow if Windows hides it, and drag the icon out to keep it visible).
 
 > **SmartScreen note:** the EXE is not code-signed yet, so Windows may show "Windows protected your PC". Click *More info*, then *Run anyway*. You can compare the file against the SHA256 checksum published in the release, or build it yourself from source (below).
@@ -98,7 +98,7 @@ Weather data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
 ## التنزيل
 
 1. افتح [أحدث إصدار](https://github.com/alimwork85-web/Zephyr/releases/latest).
-2. نزّل `Zephyr-v0.3.1-windows-x64.exe` وشغّله. لا يوجد مُثبِّت.
+2. نزّل `Zephyr-v0.3.2-windows-x64.exe` وشغّله. لا يوجد مُثبِّت.
 3. ابحث عن الأيقونة في منطقة الإشعارات (اضغط السهم `^` إن أخفاها ويندوز، واسحب الأيقونة لإبقائها ظاهرة).
 
 > **ملاحظة SmartScreen:** الملف غير موقّع رقميًا بعد، وقد يعرض ويندوز «Windows protected your PC». اضغط *More info* ثم *Run anyway*. يمكنك مقارنة بصمة SHA256 المنشورة في الإصدار، أو بناء الملف بنفسك من المصدر.
