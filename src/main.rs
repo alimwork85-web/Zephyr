@@ -19,7 +19,6 @@ use winit::event::Event;
 use winit::event_loop::{ControlFlow, EventLoopBuilder};
 
 const REFRESH_EVERY: Duration = Duration::from_secs(30 * 60);
-const RAIN_ALERT_THRESHOLD: u32 = 50;
 const PROJECT_URL: &str = "https://github.com/alimwork85-web/Zephyr";
 const APP_ID: &str = "Zephyr.WeatherTray";
 static TOAST_APP_ID: OnceLock<&str> = OnceLock::new();
@@ -42,7 +41,7 @@ fn show(tray: &TrayIcon, cfg: &Config, w: Option<&Weather>, footer: &str, failed
     let (tip, icon) = match w {
         Some(w) => (
             weather::format_tooltip(&cfg.city, cfg.celsius, w, footer),
-            icon::temperature_icon(w.current_temp, cfg.celsius, w.today_rain_prob >= RAIN_ALERT_THRESHOLD),
+            icon::temperature_icon(w.current_temp, cfg.celsius, w.current_rain || w.rain_starts.is_some()),
         ),
         None => {
             let line = if failed { "Weather unavailable\nRetrying soon..." } else { "Loading weather..." };

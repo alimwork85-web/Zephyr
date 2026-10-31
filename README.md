@@ -6,7 +6,7 @@ Built in Rust. About 2 MB, around 20 MB of RAM, and free forever (MIT).
 
 ## Features
 
-- **Temperature in the icon.** The tray icon itself shows the current temperature, colored from cold blue to hot red, and turns into a white umbrella when rain is likely.
+- **Temperature in the icon.** The tray icon itself shows the current temperature, colored from cold blue to hot red, and turns into a white umbrella while it rains.
 - **Hover for details.** Now, today's high/low, tomorrow's high/low, and an umbrella with the rain chance when it is 30% or more.
 - **Any city in the world.** Right-click, choose *Change City...*, type a name and pick from the results. Your choice is remembered.
 - **Celsius or Fahrenheit.** One click in the menu.
@@ -84,7 +84,7 @@ Weather data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
 
 ## الميزات
 
-- **درجة الحرارة داخل الأيقونة.** بلون من الأزرق (بارد) إلى الأحمر (حار)، وتتحوّل إلى مظلة بيضاء عند توقّع المطر.
+- **درجة الحرارة داخل الأيقونة.** بلون من الأزرق (بارد) إلى الأحمر (حار)، وتتحوّل إلى مظلة بيضاء أثناء هطول المطر.
 - **تمرير المؤشر للتفاصيل.** الآن، العظمى والصغرى لليوم وللغد، ومظلة مع نسبة المطر عندما تبلغ 30% أو أكثر.
 - **أي مدينة في العالم.** زر الفأرة الأيمن، *Change City...*، اكتب الاسم واختر من النتائج. يُحفظ اختيارك.
 - **مئوية أو فهرنهايت.** نقرة واحدة في القائمة.
