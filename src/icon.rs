@@ -1,5 +1,5 @@
 //! Draws the tray icon: the current temperature as big Western digits on a
-//! colour-coded rounded square, with a blue strip at the bottom when rain is
+//! colour-coded rounded square, or a white umbrella in their place when rain is
 //! likely. Everything is rendered by hand so no image or font crate is needed.
 
 use tray_icon::Icon;
@@ -44,29 +44,62 @@ fn inside_rounded_square(x: usize, y: usize) -> bool {
     dx * dx + dy * dy <= R * R
 }
 
+/// A white umbrella that fills the square: the tray shows 16 px, so only one
+/// bold silhouette reads — no digits share the icon while it rains.
+fn draw_umbrella(px: &mut [u8]) {
+    let (cx, cy, rx, ry) = (32.0, 32.0, 26.0, 12.0);
+    for y in 0..SIZE {
+        for x in 0..SIZE {
+            if !inside_rounded_square(x, y) {
+                continue;
+            }
+            let (fx, fy) = (x as f64 + 0.5, y as f64 + 0.5);
+            let dome = fy <= cy && ((fx - cx) / rx).powi(2) + ((fy - cy) / ry).powi(2) <= 1.0;
+            // three hanging panels, so the canopy edge does not read as a plain dome
+            let panel = fy >= cy
+                && [19.0, cx, 45.0]
+                    .iter()
+                    .any(|p| (fx - p).powi(2) + (fy - cy).powi(2) <= 49.0);
+            let tip = (31..=32).contains(&x) && (15..=20).contains(&y);
+            let stem = (31..=33).contains(&x) && (32..=51).contains(&y);
+            let (hx, hy) = (fx - 24.0, fy - 44.0);
+            let hook = fx >= 24.0 && fy >= 44.0 && {
+                let d = hx * hx + hy * hy;
+                d >= 25.0 && d <= 81.0
+            };
+            if dome || panel || tip || stem || hook {
+                let i = (y * SIZE + x) * 4;
+                px[i..i + 4].copy_from_slice(&[255, 255, 255, 255]);
+            }
+        }
+    }
+}
+
 pub fn render(temp: f64, celsius: bool, rain_likely: bool) -> (Vec<u8>, u32, u32) {
     let bg = background(if celsius { temp } else { (temp - 32.0) / 1.8 });
     let mut px = vec![0u8; SIZE * SIZE * 4];
-    let strip_top = SIZE - 10;
 
     for y in 0..SIZE {
         for x in 0..SIZE {
             if inside_rounded_square(x, y) {
-                let c = if rain_likely && y >= strip_top { [120, 190, 255] } else { bg };
                 let i = (y * SIZE + x) * 4;
-                px[i..i + 4].copy_from_slice(&[c[0], c[1], c[2], 255]);
+                px[i..i + 4].copy_from_slice(&[bg[0], bg[1], bg[2], 255]);
             }
         }
+    }
+
+    if rain_likely {
+        draw_umbrella(&mut px);
+        return (px, SIZE as u32, SIZE as u32);
     }
 
     let text = format!("{:.0}", temp);
     let text = if text == "-0" { "0".to_string() } else { text };
     let n = text.chars().count();
     let cols = n * 5 + (n - 1);
-    let area_h = if rain_likely { strip_top } else { SIZE };
-    let scale = ((SIZE - 6) / cols).min((area_h - 6) / 7).clamp(1, 8);
+    let scale = ((SIZE - 6) / cols).min((SIZE - 6) / 7).clamp(1, 8);
     let (w, h) = (cols * scale, 7 * scale);
-    let (x0, y0) = ((SIZE - w) / 2, (area_h - h) / 2);
+    let (x0, y0) = ((SIZE - w) / 2, (SIZE - h) / 2);
 
     for (ci, ch) in text.chars().enumerate() {
         for (row, bits) in glyph(ch).iter().enumerate() {
@@ -109,5 +142,16 @@ mod tests {
             assert_eq!(px.len(), (w * h * 4) as usize);
             assert!(px.chunks(4).any(|p| p == [255, 255, 255, 255]), "no digits drawn for {t}");
         }
+    }
+
+    #[test]
+    fn rain_replaces_the_digits_with_an_umbrella() {
+        let (px, ..) = render(20.0, true, true);
+        let white = |x: usize, y: usize| px[(y * SIZE + x) * 4] == 255;
+        assert!(white(32, 25), "no canopy");
+        assert!(white(31, 45), "no stem");
+        assert!(white(24, 52), "no hook");
+        assert!(!white(10, 20), "canopy leaks outside the dome");
+        assert!(!px.chunks(4).any(|p| p == [120, 190, 255, 255]), "old rain strip still drawn");
     }
 }
