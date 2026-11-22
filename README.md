@@ -4,7 +4,7 @@
 
 HoverSky was called Zephyr up to version 0.3.2. Your settings and "Start with Windows" carry over automatically.
 
-Built in Rust. About 2 MB, around 20 MB of RAM, and free forever (MIT).
+Built in Rust. About 2 MB, under 30 MB of RAM, and free forever (MIT).
 
 ## Features
 
@@ -19,7 +19,7 @@ Built in Rust. About 2 MB, around 20 MB of RAM, and free forever (MIT).
 - **Frost / heat alerts.** One notification a day when tomorrow's low reaches 0 °C (32 °F) or its high reaches 40 °C (104 °F). Off by default; switch it on from the menu.
 - **Alerts that stay told.** Nothing is repeated after a restart: each notification is remembered together with the day it was sent.
 - **Start with Windows.** Optional, from the menu. No admin rights needed.
-- **Always fresh.** Updates every 30 minutes, retries quickly (5 seconds, then longer) if the connection is not ready or drops, and says so in the tooltip instead of showing wrong numbers.
+- **Always fresh.** Updates every 30 minutes, retries quickly (5 seconds, then longer) if the connection is not ready or drops, and says so in the tooltip instead of showing wrong numbers. After the laptop wakes from sleep, the number is refreshed within about a minute.
 - **Private.** No accounts, no tracking, no analytics. The only network calls are to the free [Open-Meteo](https://open-meteo.com/) forecast and air-quality APIs and to [api.weather.gov](https://api.weather.gov/) for US warnings.
 
 ## Download
@@ -29,6 +29,8 @@ Built in Rust. About 2 MB, around 20 MB of RAM, and free forever (MIT).
 3. Look for the new icon in the notification area (click the `^` arrow if Windows hides it, and drag the icon out to keep it visible).
 
 > **SmartScreen note:** the EXE is not code-signed yet, so Windows may show "Windows protected your PC". Click *More info*, then *Run anyway*. You can compare the file against the SHA256 checksum published in the release, or build it yourself from source (below).
+
+Every release EXE is built from the tagged source by [GitHub Actions](https://github.com/alimwork85-web/Zephyr/actions/workflows/release.yml), not on a personal machine, and its .sha256 is attached next to it.
 
 Requires Windows 10 or 11 (64-bit) and an internet connection.
 
@@ -89,7 +91,7 @@ Weather data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
 
 كان اسم HoverSky سابقًا Zephyr (حتى الإصدار 0.3.2). إعداداتك وخيار "Start with Windows" تنتقل تلقائيًا.
 
-مكتوب بلغة Rust، حجمه نحو 2 ميغابايت، ويستهلك نحو 20 ميغابايت من الذاكرة، ومجاني بترخيص MIT.
+مكتوب بلغة Rust، حجمه نحو 2 ميغابايت، ويستهلك أقل من 30 ميغابايت من الذاكرة، ومجاني بترخيص MIT.
 
 ## الميزات
 
@@ -104,7 +106,7 @@ Weather data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
 - **تنبيه الصقيع والحرارة.** إشعار واحد يوميًا عندما تبلغ الصغرى للغد 0 °م (32 °ف) أو تبلغ العظمى 40 °م (104 °ف). مُطفأ افتراضيًا، ويُشغَّل من القائمة.
 - **تنبيهات لا تتكرر.** لا شيء يتكرر بعد إعادة التشغيل: كل إشعار يُحفظ مع يوم إرساله.
 - **التشغيل مع ويندوز.** اختياري من القائمة، بلا صلاحيات إدارية.
-- **تحديث دائم.** كل 30 دقيقة، وإعادة محاولة سريعة (5 ثوانٍ ثم أطول) إذا لم تجهز الشبكة أو انقطعت، مع كلمة «Offline» في التلميح بدل أرقام خاطئة.
+- **تحديث دائم.** كل 30 دقيقة، وإعادة محاولة سريعة (5 ثوانٍ ثم أطول) إذا لم تجهز الشبكة أو انقطعت، مع كلمة «Offline» في التلميح بدل أرقام خاطئة. وبعد استيقاظ الحاسوب من السكون يتحدّث الرقم خلال دقيقة تقريبًا.
 - **خصوصية.** لا حسابات ولا تتبّع ولا إحصاءات. الاتصالات الوحيدة إلى Open-Meteo للطقس وجودة الهواء، وإلى api.weather.gov لتحذيرات أمريكا.
 
 ## التنزيل
@@ -114,6 +116,8 @@ Weather data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
 3. ابحث عن الأيقونة في منطقة الإشعارات (اضغط السهم `^` إن أخفاها ويندوز، واسحب الأيقونة لإبقائها ظاهرة).
 
 > **ملاحظة SmartScreen:** الملف غير موقّع رقميًا بعد، وقد يعرض ويندوز «Windows protected your PC». اضغط *More info* ثم *Run anyway*. يمكنك مقارنة بصمة SHA256 المنشورة في الإصدار، أو بناء الملف بنفسك من المصدر.
+
+كل ملف EXE في الإصدارات يُبنى من الكود المصدري للإصدار عبر [GitHub Actions](https://github.com/alimwork85-web/Zephyr/actions/workflows/release.yml) لا على جهاز شخصي، ومعه ملف .sha256.
 
 يتطلب ويندوز 10 أو 11 (64 بت) واتصالًا بالإنترنت.
 

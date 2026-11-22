@@ -1,13 +1,13 @@
 name: release
 
-# Builds the EXE for a tag. It does not publish a release: download the
-# artifact, rename nothing, and upload it to the release by hand.
+# Publishing a GitHub release builds the EXE from that tag and attaches it,
+# with its checksum, to the same release.
 on:
-  push:
-    tags: ["v*"]
+  release:
+    types: [published]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   windows-x64:
@@ -34,9 +34,8 @@ jobs:
       # before the upload, signing HoverSky-v*-windows-x64.exe, so SmartScreen
       # stops warning about an unknown publisher.
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: hoversky-windows-x64
-          path: |
-            HoverSky-v*-windows-x64.exe
-            HoverSky-v*-windows-x64.exe.sha256
+      - name: Attach to the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" HoverSky-v*-windows-x64.exe HoverSky-v*-windows-x64.exe.sha256 --clobber
