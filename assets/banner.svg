@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" width="1280" height="320">
+  <rect width="1280" height="320" rx="24" fill="#14161B"/>
+  <g transform="translate(96 64)">
+    <rect width="192" height="192" rx="42" fill="#1C1F26"/>
+    <path d="M96 39 A57 57 0 0 0 96 153" fill="none" stroke="#4AA8FF" stroke-width="30"/>
+    <path d="M96 39 A57 57 0 0 1 96 153" fill="none" stroke="#FF6B4A" stroke-width="30"/>
+  </g>
+  <g font-family="Segoe UI, system-ui, -apple-system, Helvetica, Arial, sans-serif">
+    <text x="352" y="150" font-size="84" font-weight="700" fill="#F2F4F7">HoverSky</text>
+    <text x="356" y="206" font-size="32" fill="#A9B0BC">The weather, one hover away.</text>
+    <text x="356" y="252" font-size="24" fill="#6F7785">Windows tray app · Rust · about 2 MB · free and open source</text>
+  </g>
+  <g transform="translate(1000 116)" font-family="Segoe UI, system-ui, sans-serif">
+    <rect width="184" height="88" rx="14" fill="#1C1F26" stroke="#2A2E37"/>
+    <text x="26" y="58" font-size="40" font-weight="700" fill="#FF6B4A">24°</text>
+    <text x="104" y="40" font-size="16" fill="#A9B0BC">Today</text>
+    <text x="104" y="62" font-size="16" fill="#A9B0BC">27° / 15°</text>
+  </g>
+</svg>

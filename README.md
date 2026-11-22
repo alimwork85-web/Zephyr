@@ -1,3 +1,14 @@
+<p align="center"><img src="assets/banner.svg" alt="HoverSky: the weather, one hover away" width="100%"></p>
+
+<p align="center">
+  <a href="https://github.com/alimwork85-web/Zephyr/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/alimwork85-web/Zephyr?label=release&color=FF6B4A"></a>
+  <a href="https://github.com/alimwork85-web/Zephyr/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/alimwork85-web/Zephyr/total?color=4AA8FF"></a>
+  <img alt="Windows 10/11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4">
+  <img alt="Rust" src="https://img.shields.io/badge/Rust-stable-B7410E?logo=rust">
+  <a href="https://github.com/alimwork85-web/Zephyr/actions/workflows/release.yml"><img alt="Release build" src="https://img.shields.io/github/actions/workflow/status/alimwork85-web/Zephyr/release.yml?label=build"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/alimwork85-web/Zephyr"></a>
+</p>
+
 # HoverSky
 
 **The weather, one hover away.** HoverSky is a tiny Windows system tray app that shows the current temperature right in your tray icon and the full picture (now, today, tomorrow, rain chance) when you point at it. No browser, no window, no account.
