@@ -12,7 +12,7 @@ use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 use std::time::Duration;
 use tokio::sync::Notify;
 use tray_icon::menu::{CheckMenuItem, Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem};
-use tray_icon::{TrayIcon, TrayIconBuilder};
+use tray_icon::{MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent};
 use weather::{NwsAlert, Weather};
 use winit::event::Event;
 use winit::event_loop::{ControlFlow, EventLoopBuilder};
@@ -24,6 +24,7 @@ static TOAST_APP_ID: OnceLock<&str> = OnceLock::new();
 
 enum UserEvent {
     Menu(MenuId),
+    TrayClick,
     Weather(Result<Weather, String>),
     AirQuality(u32),
     Alerts(Vec<NwsAlert>),
@@ -100,6 +101,12 @@ fn persist(rain_alerted: bool, air_alerted_on: &Option<String>, seen_alerts: &[S
     State { rain_alerted, air_alerted_on: air_alerted_on.clone(), seen_alerts: seen_alerts.to_vec() }.save();
 }
 
+/// Windy opens at the city's coordinates; `format!` keeps the decimal point.
+fn open_forecast(city: &City) {
+    let url = format!("https://www.windy.com/?{:.3},{:.3},10", city.latitude, city.longitude);
+    let _ = std::process::Command::new("explorer").arg(url).spawn();
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let rt = tokio::runtime::Runtime::new()?;
     let client = weather::http_client();
@@ -159,6 +166,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let menu_proxy = proxy.clone();
     MenuEvent::set_event_handler(Some(move |e: MenuEvent| {
         let _ = menu_proxy.send_event(UserEvent::Menu(e.id));
+    }));
+
+    // Windows opens the menu on right-button down itself, so a left click is free.
+    let tray_proxy = proxy.clone();
+    TrayIconEvent::set_event_handler(Some(move |e: TrayIconEvent| {
+        if let TrayIconEvent::Click {
+            button: MouseButton::Left,
+            button_state: MouseButtonState::Up,
+            ..
+        } = e
+        {
+            let _ = tray_proxy.send_event(UserEvent::TrayClick);
+        }
     }));
 
     // Background fetcher: fetches now, then every 30 minutes (after a failure it retries
@@ -239,6 +259,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
 
         match event {
+            UserEvent::TrayClick => open_forecast(&cfg.city),
             UserEvent::Weather(Ok(w)) => {
                 let updated = Local::now().format("%H:%M").to_string();
                 show(&tray, &cfg, Some(&w), &format!("Upd {updated}"), false);
