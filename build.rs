@@ -24,7 +24,7 @@ const MANIFEST: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?
 fn main() {
     if std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "windows" {
         let mut res = winres::WindowsResource::new();
-        res.set_icon("Zephyr.ico");
+        res.set_icon("HoverSky.ico");
         res.set_manifest(MANIFEST);
         res.set("ProductName", "Zephyr Weather Tray");
         res.set("FileDescription", "Zephyr - system tray weather");
