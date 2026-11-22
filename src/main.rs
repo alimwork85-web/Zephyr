@@ -7,9 +7,8 @@ mod icon;
 mod weather;
 
 use chrono::Local;
-use config::{City, Config};
+use config::{City, Config, State};
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
-use std::collections::HashSet;
 use std::time::Duration;
 use tokio::sync::Notify;
 use tray_icon::menu::{CheckMenuItem, Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem};
@@ -89,6 +88,16 @@ fn notify_alert(a: &NwsAlert) {
         n.body(headline);
     }
     let _ = n.show();
+}
+
+/// ISO date used for the "already alerted today" checks.
+fn today_iso() -> String {
+    Local::now().date_naive().to_string()
+}
+
+/// Saves the alert memory; called only where one of the three values changes.
+fn persist(rain_alerted: bool, air_alerted_on: &Option<String>, seen_alerts: &[String]) {
+    State { rain_alerted, air_alerted_on: air_alerted_on.clone(), seen_alerts: seen_alerts.to_vec() }.save();
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -202,9 +211,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let rt_handle = rt.handle().clone();
     let mut latest: Option<Weather> = None;
-    let mut rain_alerted = false;
-    let mut air_alerted_on: Option<chrono::NaiveDate> = None;
-    let mut seen_alerts: HashSet<String> = HashSet::new();
+    let saved = State::load();
+    let mut rain_alerted = saved.rain_alerted;
+    let mut air_alerted_on = saved.air_alerted_on;
+    let mut seen_alerts = saved.seen_alerts;
 
     event_loop.run(move |event, elwt| {
         elwt.set_control_flow(ControlFlow::Wait);
@@ -226,9 +236,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if cfg.rain_alerts && !rain_alerted {
                         notify_rain(&cfg.city, at);
                         rain_alerted = true;
+                        persist(rain_alerted, &air_alerted_on, &seen_alerts);
                     }
-                } else {
+                } else if rain_alerted {
                     rain_alerted = false;
+                    persist(rain_alerted, &air_alerted_on, &seen_alerts);
                 }
                 latest = Some(w);
             }
@@ -237,17 +249,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 None => show(&tray, &cfg, None, "", true),
             },
             UserEvent::AirQuality(aqi) => {
-                let today = Local::now().date_naive();
-                if cfg.air_alerts && aqi >= 101 && air_alerted_on != Some(today) {
+                let today = today_iso();
+                if cfg.air_alerts && aqi >= 101 && air_alerted_on.as_deref() != Some(today.as_str()) {
                     notify_air(&cfg.city, aqi);
                     air_alerted_on = Some(today);
+                    persist(rain_alerted, &air_alerted_on, &seen_alerts);
                 }
             }
             UserEvent::Alerts(alerts) => {
                 for alert in alerts {
-                    if seen_alerts.insert(alert.id.clone()) && cfg.severe_alerts {
+                    if seen_alerts.contains(&alert.id) {
+                        continue;
+                    }
+                    seen_alerts.push(alert.id.clone());
+                    if cfg.severe_alerts {
                         notify_alert(&alert);
                     }
+                    persist(rain_alerted, &air_alerted_on, &seen_alerts);
                 }
             }
             UserEvent::CityChosen(city) => {
@@ -255,6 +273,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 latest = None;
                 rain_alerted = false;
                 seen_alerts.clear();
+                persist(rain_alerted, &air_alerted_on, &seen_alerts);
                 show(&tray, &cfg, None, "", false);
                 apply(&cfg);
             }

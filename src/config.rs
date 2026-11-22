@@ -100,6 +100,46 @@ impl Config {
     }
 }
 
+/// Alert memory that must survive a restart. Kept out of `config.toml` so an
+/// alert never rewrites the user's settings.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct State {
+    /// Dates are ISO strings (`YYYY-MM-DD`): chrono here is built without serde.
+    pub air_alerted_on: Option<String>,
+    pub seen_alerts: Vec<String>,
+    pub rain_alerted: bool,
+}
+
+fn state_path() -> Option<PathBuf> {
+    Some(config_path()?.with_file_name("state.toml"))
+}
+
+impl State {
+    pub fn load() -> State {
+        state_path().map(|p| State::load_from(&p)).unwrap_or_default()
+    }
+
+    fn load_from(path: &std::path::Path) -> State {
+        let Ok(text) = std::fs::read_to_string(path) else { return State::default() };
+        toml::from_str(&text).unwrap_or_default()
+    }
+
+    pub fn save(&self) {
+        let Some(path) = state_path() else { return };
+        if let Some(dir) = path.parent() {
+            let _ = std::fs::create_dir_all(dir);
+        }
+        // Only the recent ids matter, so the file stays small forever.
+        let mut state = self.clone();
+        let extra = state.seen_alerts.len().saturating_sub(50);
+        state.seen_alerts.drain(..extra);
+        if let Ok(text) = toml::to_string_pretty(&state) {
+            let _ = std::fs::write(path, text);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -148,5 +188,32 @@ mod tests {
     fn label_skips_empty_parts() {
         let c = City { name: "Paris".into(), region: "".into(), country: "France".into(), latitude: 0.0, longitude: 0.0 };
         assert_eq!(c.label(), "Paris, France");
+    }
+
+    #[test]
+    fn state_roundtrip() {
+        let s = State {
+            air_alerted_on: Some("2026-11-22".into()),
+            seen_alerts: vec!["urn:a".into(), "urn:b".into()],
+            rain_alerted: true,
+        };
+        let text = toml::to_string_pretty(&s).unwrap();
+        assert_eq!(toml::from_str::<State>(&text).unwrap(), s);
+    }
+
+    #[test]
+    fn garbage_state_file_gives_default() {
+        let path = std::env::temp_dir().join(format!("hoversky-state-{}.toml", std::process::id()));
+        std::fs::write(&path, "this is = = not toml").unwrap();
+        assert_eq!(State::load_from(&path), State::default());
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn state_missing_field_uses_default() {
+        let s: State = toml::from_str("rain_alerted = true").unwrap();
+        assert!(s.rain_alerted);
+        assert_eq!(s.air_alerted_on, None);
+        assert!(s.seen_alerts.is_empty());
     }
 }
