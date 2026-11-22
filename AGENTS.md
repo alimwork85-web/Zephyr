@@ -2,9 +2,9 @@
 
 You are implementing [PLAN.md](PLAN.md) in this repository. Nothing else.
 
-## What Zephyr is
+## What HoverSky is
 
-A Windows system tray weather app in Rust. Temperature drawn in the tray icon, details in the tooltip, settings in `%APPDATA%\Zephyr\config.toml`. It must stay tiny: one EXE around 2 MB, about 20 MB of RAM, no window except the existing city picker.
+A Windows system tray weather app in Rust. Temperature drawn in the tray icon, details in the tooltip, settings in `%APPDATA%\HoverSky\config.toml`. It must stay tiny: one EXE around 2 MB, about 20 MB of RAM, no window except the existing city picker.
 
 Layout (do not change it):
 
@@ -36,7 +36,7 @@ Layout (do not change it):
 - **No new dependencies.** Do not edit `[dependencies]` in `Cargo.toml`. Everything needed (`reqwest`, `serde`, `serde_json`, `chrono`, `winreg`, `notify-rust`, `native-windows-gui`, `tokio`) is already there.
 - **No new windows or UI** beyond what a step names (only checkable tray menu items).
 - Do not change the 30-minute refresh interval, the retry timing, the tooltip limit logic, or `icon.rs`.
-- Do not edit `Zephyr.ico`, `dist/`, or `Cargo.lock` by hand (`cargo build` may update `Cargo.lock` only in Step 7).
+- Do not edit `HoverSky.ico`, `dist/`, or `Cargo.lock` by hand (`cargo build` may update `Cargo.lock` only in Step 7).
 - Never delete user data: old `config.toml` files must keep loading (new fields get defaults).
 - **No outward actions without Ali's explicit approval:** no `git push`, no tags, no GitHub releases, no PRs to other repositories, no winget submission, no SignPath application.
 

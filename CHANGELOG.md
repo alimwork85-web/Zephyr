@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- **New name: HoverSky** (was Zephyr). Settings in `%APPDATA%\Zephyr\config.toml` are copied once to `%APPDATA%\HoverSky\config.toml` (the old file is kept), and an old "Start with Windows" entry is moved to the new name so the app never starts twice.
+- **New app icon:** a degree ring, cold blue on the left and hot red on the right.
+
 ## 0.3.2
 
 ### Changed

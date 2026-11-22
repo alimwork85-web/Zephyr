@@ -25,18 +25,18 @@ jobs:
         shell: bash
         run: |
           version=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
-          asset="Zephyr-v${version}-windows-x64.exe"
-          cp target/release/zephyr.exe "$asset"
+          asset="HoverSky-v${version}-windows-x64.exe"
+          cp target/release/hoversky.exe "$asset"
           sha256sum "$asset" > "$asset.sha256"
           cat "$asset.sha256"
 
       # Signing placeholder: add a SignPath step here (https://signpath.org)
-      # before the upload, signing Zephyr-v*-windows-x64.exe, so SmartScreen
+      # before the upload, signing HoverSky-v*-windows-x64.exe, so SmartScreen
       # stops warning about an unknown publisher.
 
       - uses: actions/upload-artifact@v4
         with:
-          name: zephyr-windows-x64
+          name: hoversky-windows-x64
           path: |
-            Zephyr-v*-windows-x64.exe
-            Zephyr-v*-windows-x64.exe.sha256
+            HoverSky-v*-windows-x64.exe
+            HoverSky-v*-windows-x64.exe.sha256

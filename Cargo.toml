@@ -1,5 +1,5 @@
 [package]
-name = "zephyr"
+name = "hoversky"
 version = "0.3.2"
 edition = "2021"
 authors = ["Ali Alhumedi"]

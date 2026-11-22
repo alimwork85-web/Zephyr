@@ -20,7 +20,7 @@ use winit::event_loop::{ControlFlow, EventLoopBuilder};
 
 const REFRESH_EVERY: Duration = Duration::from_secs(30 * 60);
 const PROJECT_URL: &str = "https://github.com/alimwork85-web/Zephyr";
-const APP_ID: &str = "Zephyr.WeatherTray";
+const APP_ID: &str = "HoverSky.WeatherTray";
 static TOAST_APP_ID: OnceLock<&str> = OnceLock::new();
 
 enum UserEvent {
@@ -114,12 +114,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let severe_item = CheckMenuItem::new("Severe weather alerts", true, cfg.severe_alerts, None);
     // If "Start with Windows" is on, re-register this EXE's current path so the
     // entry never points at an old, moved or deleted file.
+    autostart::migrate_legacy();
     let start_with_windows = autostart::is_enabled();
     if start_with_windows {
         let _ = autostart::set(true);
     }
     let startup_item = CheckMenuItem::new("Start with Windows", true, start_with_windows, None);
-    let about_item = MenuItem::new(format!("Zephyr v{} - project page", env!("CARGO_PKG_VERSION")), true, None);
+    let about_item = MenuItem::new(format!("HoverSky v{} - project page", env!("CARGO_PKG_VERSION")), true, None);
     let exit_item = MenuItem::new("Exit", true, None);
 
     let menu = Menu::new();

@@ -1,6 +1,8 @@
-# Zephyr Weather Tray
+# HoverSky
 
-**The weather, one hover away.** Zephyr is a tiny Windows system tray app that shows the current temperature right in your tray icon and the full picture (now, today, tomorrow, rain chance) when you point at it. No browser, no window, no account.
+**The weather, one hover away.** HoverSky is a tiny Windows system tray app that shows the current temperature right in your tray icon and the full picture (now, today, tomorrow, rain chance) when you point at it. No browser, no window, no account.
+
+HoverSky was called Zephyr up to version 0.3.2. Your settings and "Start with Windows" carry over automatically.
 
 Built in Rust. About 2 MB, around 20 MB of RAM, and free forever (MIT).
 
@@ -20,14 +22,14 @@ Built in Rust. About 2 MB, around 20 MB of RAM, and free forever (MIT).
 ## Download
 
 1. Open the [latest release](https://github.com/alimwork85-web/Zephyr/releases/latest).
-2. Download `Zephyr-v0.3.2-windows-x64.exe` and run it. There is no installer.
+2. Download the `-windows-x64.exe` file and run it. There is no installer.
 3. Look for the new icon in the notification area (click the `^` arrow if Windows hides it, and drag the icon out to keep it visible).
 
 > **SmartScreen note:** the EXE is not code-signed yet, so Windows may show "Windows protected your PC". Click *More info*, then *Run anyway*. You can compare the file against the SHA256 checksum published in the release, or build it yourself from source (below).
 
 Requires Windows 10 or 11 (64-bit) and an internet connection.
 
-Tip: keep the EXE in a permanent folder (for example `%LOCALAPPDATA%\Zephyr`) before enabling *Start with Windows*. If you later move or update the file, just run it once and the startup entry fixes itself.
+Tip: keep the EXE in a permanent folder (for example `%LOCALAPPDATA%\HoverSky`) before enabling *Start with Windows*. If you later move or update the file, just run it once and the startup entry fixes itself.
 
 ## Usage
 
@@ -43,7 +45,7 @@ Tip: keep the EXE in a permanent folder (for example `%LOCALAPPDATA%\Zephyr`) be
 | Launch at sign-in | Right-click, *Start with Windows* |
 | Quit | Right-click, *Exit* |
 
-Settings are stored in `%APPDATA%\Zephyr\config.toml`.
+Settings are stored in `%APPDATA%\HoverSky\config.toml`.
 
 ## Build from source
 
@@ -56,7 +58,7 @@ cargo test
 cargo build --release
 ```
 
-The binary is `target/release/zephyr.exe`.
+The binary is `target/release/hoversky.exe`.
 
 ## How it works
 
@@ -76,9 +78,11 @@ Weather data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
 
 <div dir="rtl">
 
-# زيفير — الطقس في صينية النظام
+# HoverSky — الطقس في صينية النظام
 
-**الطقس على بعد تمريرة واحدة.** زيفير تطبيق صغير في صينية نظام ويندوز: درجة الحرارة الحالية داخل الأيقونة، وتفاصيل اليوم وغدًا واحتمال المطر عند تمرير المؤشر. بلا نافذة، بلا حساب، بلا متصفح.
+**الطقس على بعد تمريرة واحدة.** HoverSky تطبيق صغير في صينية نظام ويندوز: درجة الحرارة الحالية داخل الأيقونة، وتفاصيل اليوم وغدًا واحتمال المطر عند تمرير المؤشر. بلا نافذة، بلا حساب، بلا متصفح.
+
+كان اسم HoverSky سابقًا Zephyr (حتى الإصدار 0.3.2). إعداداتك وخيار "Start with Windows" تنتقل تلقائيًا.
 
 مكتوب بلغة Rust، حجمه نحو 2 ميغابايت، ويستهلك نحو 20 ميغابايت من الذاكرة، ومجاني بترخيص MIT.
 
@@ -98,14 +102,14 @@ Weather data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
 ## التنزيل
 
 1. افتح [أحدث إصدار](https://github.com/alimwork85-web/Zephyr/releases/latest).
-2. نزّل `Zephyr-v0.3.2-windows-x64.exe` وشغّله. لا يوجد مُثبِّت.
+2. نزّل ملف `-windows-x64.exe` وشغّله. لا يوجد مُثبِّت.
 3. ابحث عن الأيقونة في منطقة الإشعارات (اضغط السهم `^` إن أخفاها ويندوز، واسحب الأيقونة لإبقائها ظاهرة).
 
 > **ملاحظة SmartScreen:** الملف غير موقّع رقميًا بعد، وقد يعرض ويندوز «Windows protected your PC». اضغط *More info* ثم *Run anyway*. يمكنك مقارنة بصمة SHA256 المنشورة في الإصدار، أو بناء الملف بنفسك من المصدر.
 
 يتطلب ويندوز 10 أو 11 (64 بت) واتصالًا بالإنترنت.
 
-نصيحة: ضع الملف في مجلد ثابت (مثل `%LOCALAPPDATA%\Zephyr`) قبل تفعيل *Start with Windows*. وإن نقلت الملف أو حدّثته، شغّله مرة واحدة ليصحّح مسار الإقلاع نفسه.
+نصيحة: ضع الملف في مجلد ثابت (مثل `%LOCALAPPDATA%\HoverSky`) قبل تفعيل *Start with Windows*. وإن نقلت الملف أو حدّثته، شغّله مرة واحدة ليصحّح مسار الإقلاع نفسه.
 
 ## الاستخدام
 
@@ -121,7 +125,7 @@ Weather data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
 | التشغيل عند تسجيل الدخول | *Start with Windows* |
 | الإغلاق | *Exit* |
 
-الإعدادات في `%APPDATA%\Zephyr\config.toml`.
+الإعدادات في `%APPDATA%\HoverSky\config.toml`.
 
 ## البناء من المصدر
 
@@ -134,7 +138,7 @@ cargo test
 cargo build --release
 ```
 
-الملف الناتج: `target/release/zephyr.exe`.
+الملف الناتج: `target/release/hoversky.exe`.
 
 ## المطوّر والترخيص
 

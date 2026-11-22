@@ -1212,6 +1212,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
+name = "hoversky"
+version = "0.3.2"
+dependencies = [
+ "chrono",
+ "native-windows-gui",
+ "notify-rust",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "toml 0.8.2",
+ "tray-icon",
+ "winit",
+ "winreg",
+ "winres",
+]
+
+[[package]]
 name = "http"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4107,24 +4125,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d1afec51604565183aeb5c54c20aeab286120d4e4460f7f76e3e8bb8c0d99473"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "zephyr"
-version = "0.3.2"
-dependencies = [
- "chrono",
- "native-windows-gui",
- "notify-rust",
- "reqwest",
- "serde",
- "serde_json",
- "tokio",
- "toml 0.8.2",
- "tray-icon",
- "winit",
- "winreg",
- "winres",
 ]
 
 [[package]]

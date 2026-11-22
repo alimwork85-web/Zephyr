@@ -4,7 +4,7 @@ Ready-to-post text. Edit freely, and attach a screenshot of the tray icon and to
 
 ## Short post (X / Mastodon / Bluesky)
 
-I built Zephyr: a tiny Windows tray app that puts the current temperature in the icon itself. Hover for today and tomorrow, search any city, free and open source. About 2 MB, written in Rust.
+I built HoverSky: a tiny Windows tray app that puts the current temperature in the icon itself. Hover for today and tomorrow, search any city, free and open source. About 2 MB, written in Rust.
 
 https://github.com/alimwork85-web/Zephyr
 
@@ -12,7 +12,7 @@ https://github.com/alimwork85-web/Zephyr
 
 ## r/rust
 
-**Title:** Zephyr: a 2 MB Windows tray weather app in Rust (tokio, reqwest, tray-icon, winit)
+**Title:** HoverSky: a 2 MB Windows tray weather app in Rust (tokio, reqwest, tray-icon, winit)
 
 I wanted the temperature always visible without opening a browser, so I wrote a tray app. The icon is rendered pixel by pixel from a 5x7 bitmap font (no image or font crates), the city picker is a small native-windows-gui window on its own thread, and data comes from Open-Meteo (no API key). Feedback on structure and code welcome.
 
@@ -22,7 +22,7 @@ https://github.com/alimwork85-web/Zephyr
 
 **Title:** Free, open-source weather in your system tray (no browser, no ads, no account)
 
-Zephyr shows the current temperature as the tray icon and the full forecast on hover. Any city, C or F, optional rain notifications, starts with Windows if you want. Around 2 MB and 20 MB RAM. MIT licensed.
+HoverSky shows the current temperature as the tray icon and the full forecast on hover. Any city, C or F, optional rain notifications, starts with Windows if you want. Around 2 MB and 20 MB RAM. MIT licensed.
 
 https://github.com/alimwork85-web/Zephyr/releases/latest
 

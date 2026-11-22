@@ -2,7 +2,7 @@
 # Before submitting: the InstallerSha256 below belongs to a local build. Replace
 # it with the value in the release's Zephyr-v0.3.1-windows-x64.exe.sha256 file,
 # because every rebuild produces a different hash.
-PackageIdentifier: AliAlhumedi.Zephyr
+PackageIdentifier: AliAlhumedi.HoverSky
 PackageVersion: 0.3.1
 InstallerType: portable
 Installers:

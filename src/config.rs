@@ -57,7 +57,21 @@ impl Default for City {
 
 fn config_path() -> Option<PathBuf> {
     let appdata = std::env::var_os("APPDATA")?;
-    Some(PathBuf::from(appdata).join("Zephyr").join("config.toml"))
+    let dir = PathBuf::from(appdata);
+    let path = dir.join("HoverSky").join("config.toml");
+    adopt_legacy(&path, &dir.join("Zephyr").join("config.toml"));
+    Some(path)
+}
+
+/// The app was called Zephyr up to 0.3.2: copy (never move) its settings once.
+fn adopt_legacy(path: &std::path::Path, legacy: &std::path::Path) {
+    if path.exists() || !legacy.exists() {
+        return;
+    }
+    if let Some(dir) = path.parent() {
+        let _ = std::fs::create_dir_all(dir);
+    }
+    let _ = std::fs::copy(legacy, path);
 }
 
 impl Config {
@@ -89,6 +103,22 @@ impl Config {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn legacy_config_is_copied_once_and_kept() {
+        let dir = std::env::temp_dir().join(format!("hoversky-test-{}", std::process::id()));
+        let legacy = dir.join("Zephyr").join("config.toml");
+        let path = dir.join("HoverSky").join("config.toml");
+        std::fs::create_dir_all(legacy.parent().unwrap()).unwrap();
+        std::fs::write(&legacy, "celsius = true").unwrap();
+        adopt_legacy(&path, &legacy);
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "celsius = true");
+        assert!(legacy.exists(), "old file must stay");
+        std::fs::write(&legacy, "celsius = false").unwrap();
+        adopt_legacy(&path, &legacy);
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "celsius = true", "new file must not be overwritten");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn roundtrip() {

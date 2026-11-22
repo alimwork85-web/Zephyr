@@ -3,7 +3,7 @@
 use winreg::{enums::HKEY_CURRENT_USER, RegKey};
 
 const RUN_KEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
-const VALUE: &str = "Zephyr";
+const VALUE: &str = "HoverSky";
 
 pub fn is_enabled() -> bool {
     RegKey::predef(HKEY_CURRENT_USER)
@@ -25,10 +25,19 @@ pub fn set(enabled: bool) -> std::io::Result<()> {
     }
 }
 
+/// Moves a "Start with Windows" entry left by the old name (Zephyr) to the new
+/// one, so the app never starts twice.
+pub fn migrate_legacy() {
+    let Ok(key) = RegKey::predef(HKEY_CURRENT_USER).open_subkey_with_flags(RUN_KEY, winreg::enums::KEY_ALL_ACCESS) else { return };
+    if key.delete_value("Zephyr").is_ok() {
+        let _ = set(true);
+    }
+}
+
 /// Names the toast sender: without this entry Windows shows "Windows PowerShell".
 pub fn register_app_id(app_id: &str) -> bool {
     RegKey::predef(HKEY_CURRENT_USER)
         .create_subkey(format!(r"Software\Classes\AppUserModelId\{app_id}"))
-        .and_then(|(key, _)| key.set_value("DisplayName", &"Zephyr"))
+        .and_then(|(key, _)| key.set_value("DisplayName", &"HoverSky"))
         .is_ok()
 }

@@ -119,7 +119,7 @@ fn run(
     nwg::Window::builder()
         .size((370, 310))
         .position((400, 250))
-        .title("Zephyr - Change city")
+        .title("HoverSky - Change city")
         .flags(nwg::WindowFlags::WINDOW | nwg::WindowFlags::VISIBLE)
         .build(&mut window)?;
     nwg::TextInput::builder()

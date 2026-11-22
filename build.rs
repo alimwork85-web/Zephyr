@@ -26,8 +26,8 @@ fn main() {
         let mut res = winres::WindowsResource::new();
         res.set_icon("HoverSky.ico");
         res.set_manifest(MANIFEST);
-        res.set("ProductName", "Zephyr Weather Tray");
-        res.set("FileDescription", "Zephyr - system tray weather");
+        res.set("ProductName", "HoverSky");
+        res.set("FileDescription", "HoverSky - weather in your tray");
         res.set("CompanyName", "Ali Alhumedi");
         res.set("LegalCopyright", "© 2026 Ali Alhumedi");
         res.compile().unwrap();

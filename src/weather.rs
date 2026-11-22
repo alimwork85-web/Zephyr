@@ -155,7 +155,7 @@ pub fn http_client() -> reqwest::Client {
         .timeout(std::time::Duration::from_secs(15))
         // api.weather.gov asks for a contact URL in the agent string.
         .user_agent(concat!(
-            "Zephyr/",
+            "HoverSky/",
             env!("CARGO_PKG_VERSION"),
             " (+https://github.com/alimwork85-web/Zephyr)"
         ))
