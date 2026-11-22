@@ -201,9 +201,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                 }
+                let deadline = Local::now() + chrono::Duration::from_std(wait).unwrap_or_default();
                 tokio::select! {
                     _ = tokio::time::sleep(wait) => {}
                     _ = refresh.notified() => {}
+                    // The monotonic sleep keeps running through a laptop suspend, so the
+                    // wall clock is checked instead: wake up soon after it passes.
+                    _ = async {
+                        loop {
+                            tokio::time::sleep(Duration::from_secs(60)).await;
+                            if Local::now() >= deadline {
+                                break;
+                            }
+                        }
+                    } => {}
                 }
             }
         });
