@@ -10,11 +10,14 @@ Built in Rust. About 2 MB, around 20 MB of RAM, and free forever (MIT).
 
 - **Temperature in the icon.** The tray icon itself shows the current temperature, colored from cold blue to hot red, and turns into a white umbrella while it rains.
 - **Hover for details.** Now, today's high/low, tomorrow's high/low, and an umbrella with the rain chance when it is 30% or more.
+- **Click for the forecast.** A left click on the icon opens [Windy](https://www.windy.com/) at your city.
 - **Any city in the world.** Right-click, choose *Change City...*, type a name and pick from the results. Your choice is remembered.
 - **Celsius or Fahrenheit.** One click in the menu.
 - **Rain alerts.** One Windows notification when rain starts within the next hour, with the time it begins. Turn it off from the menu.
 - **Air quality alerts.** One notification a day when the air is unhealthy (AQI 101 or worse), with the category. Turn it off from the menu.
 - **Severe weather alerts.** Official US National Weather Service warnings (severe or extreme) for your city, each one notified once. United States only; elsewhere this is skipped silently.
+- **Frost / heat alerts.** One notification a day when tomorrow's low reaches 0 °C (32 °F) or its high reaches 40 °C (104 °F). Off by default; switch it on from the menu.
+- **Alerts that stay told.** Nothing is repeated after a restart: each notification is remembered together with the day it was sent.
 - **Start with Windows.** Optional, from the menu. No admin rights needed.
 - **Always fresh.** Updates every 30 minutes, retries quickly (5 seconds, then longer) if the connection is not ready or drops, and says so in the tooltip instead of showing wrong numbers.
 - **Private.** No accounts, no tracking, no analytics. The only network calls are to the free [Open-Meteo](https://open-meteo.com/) forecast and air-quality APIs and to [api.weather.gov](https://api.weather.gov/) for US warnings.
@@ -36,16 +39,18 @@ Tip: keep the EXE in a permanent folder (for example `%LOCALAPPDATA%\HoverSky`) 
 | Action | How |
 | --- | --- |
 | See the forecast | Hover over the tray icon |
+| Open the full forecast map | Left-click the tray icon |
 | Refresh now | Right-click, *Refresh Now* |
 | Change city | Right-click, *Change City...*, search, select, *Use this city* |
 | Switch units | Right-click, *Use Celsius* |
 | Rain notifications | Right-click, *Rain alerts* (rain starting within the hour) |
 | Air quality notifications | Right-click, *Air quality alerts* |
 | Severe weather notifications | Right-click, *Severe weather alerts* (US only) |
+| Frost / heat notifications | Right-click, *Frost / heat alerts* (off by default) |
 | Launch at sign-in | Right-click, *Start with Windows* |
 | Quit | Right-click, *Exit* |
 
-Settings are stored in `%APPDATA%\HoverSky\config.toml`.
+Settings are stored in `%APPDATA%\HoverSky\config.toml`; the alert memory is in `state.toml` next to it.
 
 ## Build from source
 
@@ -90,11 +95,14 @@ Weather data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
 
 - **درجة الحرارة داخل الأيقونة.** بلون من الأزرق (بارد) إلى الأحمر (حار)، وتتحوّل إلى مظلة بيضاء أثناء هطول المطر.
 - **تمرير المؤشر للتفاصيل.** الآن، العظمى والصغرى لليوم وللغد، ومظلة مع نسبة المطر عندما تبلغ 30% أو أكثر.
+- **نقرة للتوقعات.** الضغط بزر الفأرة الأيسر على الأيقونة يفتح [Windy](https://www.windy.com/) على مدينتك.
 - **أي مدينة في العالم.** زر الفأرة الأيمن، *Change City...*، اكتب الاسم واختر من النتائج. يُحفظ اختيارك.
 - **مئوية أو فهرنهايت.** نقرة واحدة في القائمة.
 - **تنبيه المطر.** إشعار واحد عندما يبدأ المطر خلال الساعة القادمة، مع وقت بدايته. يُطفأ من القائمة.
 - **تنبيه جودة الهواء.** إشعار واحد يوميًا عندما يبلغ مؤشر AQI الحد 101 أو أكثر، مع تصنيفه. يُطفأ من القائمة.
 - **تحذيرات الطقس الخطيرة.** تحذيرات هيئة الأرصاد الأمريكية (NWS) من مستوى Severe أو Extreme لمدينتك، وكل تحذير يُنبَّه به مرة واحدة. للولايات المتحدة فقط، ويُتجاهل بصمت في غيرها.
+- **تنبيه الصقيع والحرارة.** إشعار واحد يوميًا عندما تبلغ الصغرى للغد 0 °م (32 °ف) أو تبلغ العظمى 40 °م (104 °ف). مُطفأ افتراضيًا، ويُشغَّل من القائمة.
+- **تنبيهات لا تتكرر.** لا شيء يتكرر بعد إعادة التشغيل: كل إشعار يُحفظ مع يوم إرساله.
 - **التشغيل مع ويندوز.** اختياري من القائمة، بلا صلاحيات إدارية.
 - **تحديث دائم.** كل 30 دقيقة، وإعادة محاولة سريعة (5 ثوانٍ ثم أطول) إذا لم تجهز الشبكة أو انقطعت، مع كلمة «Offline» في التلميح بدل أرقام خاطئة.
 - **خصوصية.** لا حسابات ولا تتبّع ولا إحصاءات. الاتصالات الوحيدة إلى Open-Meteo للطقس وجودة الهواء، وإلى api.weather.gov لتحذيرات أمريكا.
@@ -116,16 +124,18 @@ Weather data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
 | الإجراء | الطريقة |
 | --- | --- |
 | رؤية التوقعات | مرّر المؤشر على أيقونة الصينية |
+| فتح خريطة التوقعات | الضغط بزر الفأرة الأيسر على الأيقونة |
 | تحديث فوري | زر الفأرة الأيمن، *Refresh Now* |
 | تغيير المدينة | *Change City...* ثم ابحث واختر *Use this city* |
 | تبديل الوحدة | *Use Celsius* |
 | تنبيه المطر | *Rain alerts* (المطر خلال ساعة) |
 | تنبيه جودة الهواء | *Air quality alerts* |
 | تحذيرات الطقس الخطيرة | *Severe weather alerts* (أمريكا فقط) |
+| تنبيه الصقيع والحرارة | *Frost / heat alerts* (مُطفأ افتراضيًا) |
 | التشغيل عند تسجيل الدخول | *Start with Windows* |
 | الإغلاق | *Exit* |
 
-الإعدادات في `%APPDATA%\HoverSky\config.toml`.
+الإعدادات في `%APPDATA%\HoverSky\config.toml`، وذاكرة التنبيهات في `state.toml` بجانبه.
 
 ## البناء من المصدر
 

@@ -1,10 +1,18 @@
 # Changelog
 
-## Unreleased
+## 0.4.0
+
+### Added
+- **Frost / heat alerts.** One notification a day when tomorrow's low reaches 0 °C (32 °F) or its high reaches 40 °C (104 °F), e.g. "Frost tomorrow in Riyadh: low -2°C". Off by default; turn it on from the menu.
+- **Left click opens the forecast.** Clicking the tray icon opens [Windy](https://www.windy.com/) at your city. Right click still opens the menu.
 
 ### Changed
 - **New name: HoverSky** (was Zephyr). Settings in `%APPDATA%\Zephyr\config.toml` are copied once to `%APPDATA%\HoverSky\config.toml` (the old file is kept), and an old "Start with Windows" entry is moved to the new name so the app never starts twice.
 - **New app icon:** a degree ring, cold blue on the left and hot red on the right.
+- **Alerts are remembered.** Rain, air quality and severe weather notifications are not repeated after a restart; the memory lives in `%APPDATA%\HoverSky\state.toml`.
+
+### Fixed
+- **A fresh number after sleep.** The 30-minute wait used a monotonic timer, so after the laptop woke from sleep the tooltip could show an old temperature for hours. The wall clock is now checked every minute.
 
 ## 0.3.2
 
