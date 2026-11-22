@@ -143,6 +143,19 @@ fn rain_start(now: &str, m: &Minutely15) -> Option<String> {
     })
 }
 
+/// Tomorrow's forecast crosses a safety threshold: frost or heat.
+/// The values arrive already in the user's unit, so the thresholds follow it.
+pub fn extreme_tomorrow(w: &Weather, celsius: bool) -> Option<&'static str> {
+    let (frost, heat) = if celsius { (0.0, 40.0) } else { (32.0, 104.0) };
+    if w.tomorrow_min <= frost {
+        Some("Frost")
+    } else if w.tomorrow_max >= heat {
+        Some("Heat")
+    } else {
+        None
+    }
+}
+
 /// Delay before retry number `failures` (1-based): 5s, 10s, 20s, 40s, 80s, then 120s.
 /// Starting fast matters because the network is often not ready yet right after boot.
 pub fn retry_delay(failures: u32) -> std::time::Duration {
@@ -470,6 +483,32 @@ mod tests {
         assert!(parse_nws(r#"{"features": []}"#).unwrap().is_empty());
         assert!(parse_nws("not json").is_err());
         assert!(parse_nws("{}").is_err());
+    }
+
+    #[test]
+    fn extreme_alert_fires_on_frost_and_heat_edges() {
+        let mut w = parse_forecast(SAMPLE).unwrap();
+        assert_eq!(extreme_tomorrow(&w, false), None);
+        w.tomorrow_min = 32.0;
+        assert_eq!(extreme_tomorrow(&w, false), Some("Frost"));
+        w.tomorrow_min = 32.1;
+        w.tomorrow_max = 104.0;
+        assert_eq!(extreme_tomorrow(&w, false), Some("Heat"));
+        w.tomorrow_max = 103.9;
+        assert_eq!(extreme_tomorrow(&w, false), None);
+    }
+
+    #[test]
+    fn extreme_alert_uses_celsius_edges_too() {
+        let mut w = parse_forecast(SAMPLE).unwrap();
+        w.tomorrow_max = 88.0;
+        w.tomorrow_min = 0.0;
+        assert_eq!(extreme_tomorrow(&w, true), Some("Frost"));
+        w.tomorrow_min = 0.1;
+        w.tomorrow_max = 40.0;
+        assert_eq!(extreme_tomorrow(&w, true), Some("Heat"));
+        w.tomorrow_max = 39.9;
+        assert_eq!(extreme_tomorrow(&w, true), None);
     }
 
     #[test]

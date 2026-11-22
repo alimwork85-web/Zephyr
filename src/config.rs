@@ -28,6 +28,7 @@ pub struct Config {
     pub rain_alerts: bool,
     pub air_alerts: bool,
     pub severe_alerts: bool,
+    pub extreme_alerts: bool,
     pub city: City,
 }
 
@@ -38,6 +39,7 @@ impl Default for Config {
             rain_alerts: true,
             air_alerts: true,
             severe_alerts: true,
+            extreme_alerts: false,
             city: City {
                 name: "Sanger".into(),
                 region: "California".into(),
@@ -107,6 +109,7 @@ impl Config {
 pub struct State {
     /// Dates are ISO strings (`YYYY-MM-DD`): chrono here is built without serde.
     pub air_alerted_on: Option<String>,
+    pub extreme_alerted_on: Option<String>,
     pub seen_alerts: Vec<String>,
     pub rain_alerted: bool,
 }
@@ -182,6 +185,7 @@ mod tests {
         assert!(!cfg.rain_alerts);
         assert!(cfg.air_alerts);
         assert!(cfg.severe_alerts);
+        assert!(!cfg.extreme_alerts);
     }
 
     #[test]
@@ -194,6 +198,7 @@ mod tests {
     fn state_roundtrip() {
         let s = State {
             air_alerted_on: Some("2026-11-22".into()),
+            extreme_alerted_on: Some("2026-11-22".into()),
             seen_alerts: vec!["urn:a".into(), "urn:b".into()],
             rain_alerted: true,
         };

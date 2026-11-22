@@ -91,14 +91,37 @@ fn notify_alert(a: &NwsAlert) {
     let _ = n.show();
 }
 
+fn notify_extreme(city: &City, kind: &str, temp: f64, celsius: bool) {
+    let mut n = notify_rust::Notification::new();
+    if let Some(id) = TOAST_APP_ID.get() {
+        n.app_id(id);
+    }
+    let unit = if celsius { "C" } else { "F" };
+    let word = if kind == "Frost" { "low" } else { "high" };
+    let _ = n
+        .summary(&format!("{kind} tomorrow in {}: {word} {temp:.0}\u{b0}{unit}", city.name))
+        .show();
+}
+
 /// ISO date used for the "already alerted today" checks.
 fn today_iso() -> String {
     Local::now().date_naive().to_string()
 }
 
-/// Saves the alert memory; called only where one of the three values changes.
-fn persist(rain_alerted: bool, air_alerted_on: &Option<String>, seen_alerts: &[String]) {
-    State { rain_alerted, air_alerted_on: air_alerted_on.clone(), seen_alerts: seen_alerts.to_vec() }.save();
+/// Saves the alert memory; called only where one of these values changes.
+fn persist(
+    rain_alerted: bool,
+    air_alerted_on: &Option<String>,
+    extreme_alerted_on: &Option<String>,
+    seen_alerts: &[String],
+) {
+    State {
+        rain_alerted,
+        air_alerted_on: air_alerted_on.clone(),
+        extreme_alerted_on: extreme_alerted_on.clone(),
+        seen_alerts: seen_alerts.to_vec(),
+    }
+    .save();
 }
 
 /// Windy opens at the city's coordinates; `format!` keeps the decimal point.
@@ -128,6 +151,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let alerts_item = CheckMenuItem::new("Rain alerts", true, cfg.rain_alerts, None);
     let air_item = CheckMenuItem::new("Air quality alerts", true, cfg.air_alerts, None);
     let severe_item = CheckMenuItem::new("Severe weather alerts", true, cfg.severe_alerts, None);
+    let extreme_item = CheckMenuItem::new("Frost / heat alerts", true, cfg.extreme_alerts, None);
     // If "Start with Windows" is on, re-register this EXE's current path so the
     // entry never points at an old, moved or deleted file.
     autostart::migrate_legacy();
@@ -148,6 +172,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &alerts_item,
         &air_item,
         &severe_item,
+        &extreme_item,
         &startup_item,
         &PredefinedMenuItem::separator(),
         &about_item,
@@ -245,6 +270,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let saved = State::load();
     let mut rain_alerted = saved.rain_alerted;
     let mut air_alerted_on = saved.air_alerted_on;
+    let mut extreme_alerted_on = saved.extreme_alerted_on;
     let mut seen_alerts = saved.seen_alerts;
 
     event_loop.run(move |event, elwt| {
@@ -268,11 +294,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if cfg.rain_alerts && !rain_alerted {
                         notify_rain(&cfg.city, at);
                         rain_alerted = true;
-                        persist(rain_alerted, &air_alerted_on, &seen_alerts);
+                        persist(rain_alerted, &air_alerted_on, &extreme_alerted_on, &seen_alerts);
                     }
                 } else if rain_alerted {
                     rain_alerted = false;
-                    persist(rain_alerted, &air_alerted_on, &seen_alerts);
+                    persist(rain_alerted, &air_alerted_on, &extreme_alerted_on, &seen_alerts);
+                }
+                let today = today_iso();
+                if cfg.extreme_alerts && extreme_alerted_on.as_deref() != Some(today.as_str()) {
+                    if let Some(kind) = weather::extreme_tomorrow(&w, cfg.celsius) {
+                        let temp = if kind == "Frost" { w.tomorrow_min } else { w.tomorrow_max };
+                        notify_extreme(&cfg.city, kind, temp, cfg.celsius);
+                        extreme_alerted_on = Some(today);
+                        persist(rain_alerted, &air_alerted_on, &extreme_alerted_on, &seen_alerts);
+                    }
                 }
                 latest = Some(w);
             }
@@ -285,7 +320,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if cfg.air_alerts && aqi >= 101 && air_alerted_on.as_deref() != Some(today.as_str()) {
                     notify_air(&cfg.city, aqi);
                     air_alerted_on = Some(today);
-                    persist(rain_alerted, &air_alerted_on, &seen_alerts);
+                    persist(rain_alerted, &air_alerted_on, &extreme_alerted_on, &seen_alerts);
                 }
             }
             UserEvent::Alerts(alerts) => {
@@ -297,7 +332,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if cfg.severe_alerts {
                         notify_alert(&alert);
                     }
-                    persist(rain_alerted, &air_alerted_on, &seen_alerts);
+                    persist(rain_alerted, &air_alerted_on, &extreme_alerted_on, &seen_alerts);
                 }
             }
             UserEvent::CityChosen(city) => {
@@ -305,7 +340,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 latest = None;
                 rain_alerted = false;
                 seen_alerts.clear();
-                persist(rain_alerted, &air_alerted_on, &seen_alerts);
+                persist(rain_alerted, &air_alerted_on, &extreme_alerted_on, &seen_alerts);
                 show(&tray, &cfg, None, "", false);
                 apply(&cfg);
             }
@@ -336,6 +371,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 } else if id == *severe_item.id() {
                     cfg.severe_alerts = !cfg.severe_alerts;
                     severe_item.set_checked(cfg.severe_alerts);
+                    cfg.save();
+                    *lock(&shared) = cfg.clone();
+                } else if id == *extreme_item.id() {
+                    cfg.extreme_alerts = !cfg.extreme_alerts;
+                    extreme_item.set_checked(cfg.extreme_alerts);
                     cfg.save();
                     *lock(&shared) = cfg.clone();
                 } else if id == *startup_item.id() {
